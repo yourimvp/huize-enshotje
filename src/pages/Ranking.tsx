@@ -3,6 +3,8 @@ import { insert, remove } from '../lib/db'
 import { useTable } from '../lib/hooks'
 import { useHouse } from '../lib/house'
 import { ago, formatMs, parseTime } from '../lib/format'
+import { isPersonalRecord } from '../lib/activity'
+import Confetti from '../components/Confetti'
 import { Avatar, PageTitle } from '../components/decor'
 import { ConfirmButton, Empty, PersonPicker, Tabs } from '../components/ui'
 import type { Housemate, TimeEntry } from '../lib/types'
@@ -32,7 +34,7 @@ export default function Ranking() {
       </PageTitle>
       <Tabs value={discipline.id} onChange={setDId} tabs={disciplines.map((d) => ({ id: d.id, label: d.name }))} />
       <Board times={own} />
-      <Recorder disciplineId={discipline.id} name={discipline.name} />
+      <Recorder key={discipline.id} disciplineId={discipline.id} name={discipline.name} times={own} />
       <Recent times={own} />
     </div>
   )
@@ -146,7 +148,7 @@ function useStopwatch() {
   const holdTimer = useRef(0)
   const didReset = useRef(false)
 
-  useEffect(() => () => cancelAnimationFrame(raf.current), [])
+  useEffect(() => () => { cancelAnimationFrame(raf.current); window.clearTimeout(holdTimer.current) }, [])
 
   const reset = () => {
     cancelAnimationFrame(raf.current)
@@ -211,33 +213,54 @@ function useStopwatch() {
   return { running, elapsed, holding, reset, handlers }
 }
 
-function Recorder({ disciplineId, name }: { disciplineId: string; name: string }) {
+function Recorder({ disciplineId, name, times }: { disciplineId: string; name: string; times: TimeEntry[] }) {
   const sw = useStopwatch()
   const [who, setWho] = useState<string | null>(null)
   const [manual, setManual] = useState('')
-  const [saved, setSaved] = useState<string | null>(null)
+  const [saved, setSaved] = useState<{ time: string; record: boolean } | null>(null)
+  const [celebration, setCelebration] = useState(0)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!celebration) return
+    const timer = window.setTimeout(() => setCelebration(0), 2800)
+    return () => window.clearTimeout(timer)
+  }, [celebration])
 
   const manualMs = parseTime(manual)
   const ms = manual ? manualMs : !sw.running && sw.elapsed > 0 ? Math.round(sw.elapsed) : null
 
   async function save(e: FormEvent) {
     e.preventDefault()
-    if (!ms || !who) return
-    await insert('times', { discipline_id: disciplineId, housemate_id: who, ms })
-    setSaved(formatMs(ms))
-    sw.reset()
-    setManual('')
+    if (!ms || !who || sw.running || saving) return
+    const record = isPersonalRecord(times, who, disciplineId, ms)
+    setSaving(true)
+    setError('')
+    setSaved(null)
+    setCelebration(0)
+    try {
+      await insert('times', { discipline_id: disciplineId, housemate_id: who, ms })
+      setSaved({ time: formatMs(ms), record })
+      if (record) setCelebration(Date.now())
+      sw.reset()
+      setManual('')
+    } catch {
+      setError('Opslaan is niet gelukt. Probeer het opnieuw.')
+    } finally { setSaving(false) }
   }
 
   const label = sw.running ? 'Tik om te stoppen' : sw.elapsed ? 'Tik voor opnieuw · houd vast om te resetten' : 'Tik om te starten'
 
   return (
     <form className="card form" onSubmit={save}>
+      {celebration > 0 && <Confetti key={celebration} />}
       <h2 className="card-title">Tijd opnemen · {name}</h2>
       <button
         type="button"
         className={`stopwatch ${sw.running ? 'running' : ''} ${sw.holding ? 'holding' : ''}`}
         {...sw.handlers}
+        disabled={saving}
         aria-label={label}
       >
         <span className="sw-time">{formatMs(sw.elapsed)}</span>
@@ -253,7 +276,7 @@ function Recorder({ disciplineId, name }: { disciplineId: string; name: string }
           placeholder="of typ: 3,42"
           value={manual}
           onChange={(e) => setManual(e.target.value)}
-          disabled={sw.running}
+          disabled={sw.running || saving}
           aria-label="Tijd handmatig in seconden"
           className="manual"
         />
@@ -262,9 +285,10 @@ function Recorder({ disciplineId, name }: { disciplineId: string; name: string }
         <span>Van wie?</span>
         <PersonPicker value={who} onChange={setWho} label="Van wie" />
       </div>
-      {saved && <p className="hint ok">Opgeslagen: {saved}</p>}
-      <button className="btn primary" disabled={!ms || !who || sw.running}>
-        {ms ? `Opslaan · ${formatMs(ms)}` : 'Opslaan'}
+      {saved && <p className="hint ok" role="status">{saved.record ? 'Nieuw persoonlijk record! ' : 'Opgeslagen: '}{saved.time}</p>}
+      {error && <p className="hint" role="alert">{error}</p>}
+      <button className="btn primary" disabled={!ms || !who || sw.running || saving}>
+        {saving ? 'Opslaan…' : ms ? `Opslaan · ${formatMs(ms)}` : 'Opslaan'}
       </button>
     </form>
   )

@@ -4,10 +4,11 @@ import { insert, remove } from '../lib/db'
 import { useTable } from '../lib/hooks'
 import { useHouse } from '../lib/house'
 import { weekStart } from '../lib/format'
+import { weeklyDrinkStats } from '../lib/activity'
 import { GlassStrip } from '../components/decor'
 import { ConfirmButton, Empty, PlusIcon } from '../components/ui'
 import { AddItem, OpenItems } from '../components/Shopping'
-import type { DrinkTally, DrinkType, Quote } from '../lib/types'
+import type { Quote } from '../lib/types'
 
 export default function Home() {
   const { active } = useHouse()
@@ -62,19 +63,25 @@ const DAYS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo']
 function ZuipOverzicht() {
   const { active, byId } = useHouse()
   const thisWeek = weekStart(new Date())
-  const lastWeek = new Date(thisWeek.getTime() - 7 * 86400_000)
+  const lastWeek = new Date(thisWeek.getFullYear(), thisWeek.getMonth(), thisWeek.getDate() - 7)
   const tallies = useTable('drink_tallies', { since: lastWeek.toISOString() }).rows
   const types = useTable('drink_types').rows
 
-  const s = useMemo(() => stats(tallies, types, thisWeek), [tallies, types, thisWeek])
+  const s = useMemo(() => weeklyDrinkStats(tallies, types, thisWeek), [tallies, types, thisWeek])
   const king = s.top ? byId.get(s.top[0]) : undefined
   const today = (new Date().getDay() + 6) % 7
   const maxDay = Math.max(1, ...s.days)
   const diff = s.total - s.prev
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const dayPeople = s.peopleByDay.map((people) => [...people.entries()]
+    .map(([id, count]) => ({ id, count, name: byId.get(id)?.name ?? 'Onbekend', color: byId.get(id)?.color ?? 'var(--muted)' }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'nl')))
+  const dateOf = (i: number) => new Date(thisWeek.getFullYear(), thisWeek.getMonth(), thisWeek.getDate() + i)
+  const dayLabel = (i: number) => dateOf(i).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'short' })
 
   return (
-    <Link to="/turf" className="card zuip">
-      <div className="zuip-main">
+    <section className="card zuip" aria-label="Zuipoverzicht deze week">
+      <Link to="/turf" className="zuip-main">
         <h2 className="card-title">
           <span className="dot" style={{ background: 'var(--g-orange)', color: 'var(--g-orange)' }} /> Zuipoverzicht · deze week
         </h2>
@@ -94,41 +101,54 @@ function ZuipOverzicht() {
             ))}
           </div>
         )}
+      </Link>
+      <div className="week-chart">
+        <div className="week-bars" role="group" aria-label="Drankjes per dag, uitgesplitst per huisgenoot">
+          {s.days.map((n, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`wb ${i === today ? 'today' : ''} ${i > today ? 'future' : ''} ${selectedDay === i ? 'selected' : ''}`}
+              aria-label={`${dayLabel(i)}: ${n} drankjes`}
+              aria-describedby={selectedDay === i ? 'day-drinks-detail' : undefined}
+              onPointerEnter={(e) => { if (e.pointerType === 'mouse') setSelectedDay(i) }}
+              onPointerDown={() => setSelectedDay(i)}
+              onPointerLeave={(e) => { if (e.pointerType === 'mouse') setSelectedDay(null) }}
+              onPointerCancel={() => setSelectedDay(null)}
+              onFocus={() => setSelectedDay(i)}
+              onBlur={() => setSelectedDay(null)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setSelectedDay(null)
+                else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedDay(i) }
+              }}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              <span className="wb-n">{n || ''}</span>
+              <span className="wb-track" aria-hidden="true">
+                <span className="wb-bar" style={{ height: `${(n / maxDay) * 100}%` }}>
+                  {dayPeople[i].map((person) => <span key={person.id} className="wb-segment" style={{ height: `${(person.count / n) * 100}%`, background: person.color }} />)}
+                </span>
+              </span>
+              <span className="wb-d">{DAYS[i]}</span>
+            </button>
+          ))}
+        </div>
+        <p className="hint chart-hint">Houd een staaf ingedrukt voor de aantallen per persoon.</p>
+        {selectedDay !== null && <div className="day-tooltip" id="day-drinks-detail" role="tooltip" style={{ left: `${(selectedDay / 6) * 100}%`, transform: `translateX(-${(selectedDay / 6) * 100}%)` }}>
+          <strong className="day-tooltip-title">{dayLabel(selectedDay)}</strong>
+          {dayPeople[selectedDay].length > 0 ? <ul>
+            {dayPeople[selectedDay].map((person) => <li key={person.id}>
+              <span className="person-dot" style={{ background: person.color }} />
+              <span>{person.name}</span>
+              <b>{person.count}</b>
+              <span className="meta">{new Intl.NumberFormat('nl-NL', { style: 'percent', maximumFractionDigits: 1 }).format(person.count / s.days[selectedDay])}</span>
+            </li>)}
+          </ul> : <p className="hint">Nog geen drankjes.</p>}
+          <div className="day-tooltip-total"><span>Totaal</span><b>{s.days[selectedDay]}</b></div>
+        </div>}
       </div>
-      <div className="week-bars" aria-label="Drankjes per dag">
-        {s.days.map((n, i) => (
-          <div key={i} className={`wb ${i === today ? 'today' : ''} ${i > today ? 'future' : ''}`}>
-            <span className="wb-n">{n || ''}</span>
-            <span className="wb-bar" style={{ height: `${(n / maxDay) * 100}%` }} />
-            <span className="wb-d">{DAYS[i]}</span>
-          </div>
-        ))}
-      </div>
-    </Link>
+    </section>
   )
-}
-
-function stats(tallies: DrinkTally[], types: DrinkType[], week: Date) {
-  const wk = week.toISOString()
-  const days = [0, 0, 0, 0, 0, 0, 0]
-  const per = new Map<string, number>()
-  const typeCount = new Map<string, number>()
-  let total = 0
-  let prev = 0
-  for (const t of tallies) {
-    if (t.created_at < wk) {
-      prev += t.count
-      continue
-    }
-    total += t.count
-    days[(new Date(t.created_at).getDay() + 6) % 7] += t.count
-    per.set(t.housemate_id, (per.get(t.housemate_id) ?? 0) + t.count)
-    const name = types.find((x) => x.id === t.drink_type_id)?.name ?? 'Overig'
-    typeCount.set(name, (typeCount.get(name) ?? 0) + t.count)
-  }
-  const top = [...per.entries()].sort((a, b) => b[1] - a[1])[0]
-  const byType = [...typeCount.entries()].sort((a, b) => b[1] - a[1])
-  return { total, prev, days, top, byType }
 }
 
 /** Weeknummer sinds een vast punt, zodat iedereen dezelfde quote ziet. */
