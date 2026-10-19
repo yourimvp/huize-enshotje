@@ -1,4 +1,4 @@
-# Tijdelijke hosting op GitHub Pages: https://yourimvp.github.io/huize-enshotje/
+# Hosting op GitHub Pages; ondersteunt ook een eigen domein.
 # Zet in de repo Settings → Pages de bron op "GitHub Actions".
 name: GitHub Pages
 
@@ -25,8 +25,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Read GitHub Pages configuration
+        id: pages
+        uses: actions/configure-pages@v5
       - run: npm ci
-      - run: npx tsc --noEmit && npx vite build --base=/huize-enshotje/
+      - name: Build for the configured Pages domain
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: npx tsc --noEmit && npx vite build --base="${PAGES_BASE_PATH}/"
       # Zorgt dat /turf, /anys etc. ook werken als je ververst
       - run: cp dist/index.html dist/404.html
       - uses: actions/upload-pages-artifact@v3
