@@ -16,22 +16,24 @@ interface Pair {
 
 export default function Anys() {
   const { rows } = useTable('anytimers')
-  const { active, byId } = useHouse()
+  const { active, housemates, byId } = useHouse()
   const [holder, setHolder] = useState('')
   const [debtor, setDebtor] = useState('')
   const [reason, setReason] = useState('')
   const [showOld, setShowOld] = useState(false)
+  const [filterHolder, setFilterHolder] = useState('')
 
   const open = useMemo(() => rows.filter((a) => !a.redeemed_at), [rows])
+  const visibleOpen = useMemo(() => open.filter((a) => !filterHolder || a.owed_to === filterHolder), [open, filterHolder])
   const old = useMemo(
-    () => rows.filter((a) => a.redeemed_at).sort((a, b) => b.redeemed_at!.localeCompare(a.redeemed_at!)).slice(0, 25),
-    [rows],
+    () => rows.filter((a) => a.redeemed_at && (!filterHolder || a.owed_to === filterHolder)).sort((a, b) => b.redeemed_at!.localeCompare(a.redeemed_at!)).slice(0, 25),
+    [rows, filterHolder],
   )
 
   // Bonnetjes: per (houder → schuldenaar), oudste eerst
   const pairs = useMemo(() => {
     const m = new Map<string, Pair>()
-    for (const a of open) {
+    for (const a of visibleOpen) {
       const h = byId.get(a.owed_to)
       const d = byId.get(a.owed_by)
       if (!h || !d) continue
@@ -41,7 +43,7 @@ export default function Anys() {
       m.set(key, p)
     }
     return [...m.values()].sort((a, b) => b.items.length - a.items.length || a.holder.name.localeCompare(b.holder.name))
-  }, [open, byId])
+  }, [visibleOpen, byId])
 
   // Stand per persoon
   const stand = useMemo(() => {
@@ -63,7 +65,7 @@ export default function Anys() {
 
   return (
     <div className="page">
-      <PageTitle color="var(--g-magenta)" sub={`${open.length} open in huis`}>
+      <PageTitle color="var(--g-magenta)" sub={filterHolder ? `${visibleOpen.length} open voor ${byId.get(filterHolder)?.name ?? 'deze persoon'}` : `${open.length} open in huis`}>
         Anytimers
       </PageTitle>
 
@@ -81,9 +83,20 @@ export default function Anys() {
         </div>
       </form>
 
+      <label className="field">
+        <span>Filter op wie mag opeisen</span>
+        <select className="select" value={filterHolder} onChange={(e) => setFilterHolder(e.target.value)} aria-label="Filter op wie mag opeisen">
+          <option value="">Iedereen</option>
+          {housemates
+            .filter((h) => h.active || rows.some((a) => a.owed_to === h.id))
+            .sort((a, b) => a.name.localeCompare(b.name, 'nl'))
+            .map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+        </select>
+      </label>
+
       {pairs.length === 0 ? (
         <section className="card">
-          <Empty>Niemand heeft een any open. Verdacht braaf huis.</Empty>
+          <Empty>{filterHolder ? `${byId.get(filterHolder)?.name ?? 'Deze persoon'} heeft geen anytimers open.` : 'Niemand heeft een any open. Verdacht braaf huis.'}</Empty>
         </section>
       ) : (
         <section className="tickets">
@@ -125,7 +138,7 @@ export default function Anys() {
 
       {open.length > 0 && (
         <section className="card">
-          <h2 className="card-title">Stand</h2>
+          <h2 className="card-title">Stand in huis</h2>
           <div className="stand-legend">
             <span>
               <i className="sw moet" /> moet adten

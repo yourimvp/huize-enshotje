@@ -198,7 +198,7 @@ function QuoteCard() {
 
       {current ? (
         <figure className="quote">
-          <blockquote>{current.text}</blockquote>
+          <blockquote>{current.text}”</blockquote>
           <figcaption>
             — {nameOf(current)}
             {current.context && <span className="q-context">, {current.context}</span>}
