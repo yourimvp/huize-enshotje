@@ -22,6 +22,7 @@ export default function Anys() {
   const [reason, setReason] = useState('')
   const [showOld, setShowOld] = useState(false)
   const [filterHolder, setFilterHolder] = useState('')
+  const [showFilter, setShowFilter] = useState(false)
 
   const open = useMemo(() => rows.filter((a) => !a.redeemed_at), [rows])
   const visibleOpen = useMemo(() => open.filter((a) => !filterHolder || a.owed_to === filterHolder), [open, filterHolder])
@@ -65,9 +66,35 @@ export default function Anys() {
 
   return (
     <div className="page">
-      <PageTitle color="var(--g-magenta)" sub={filterHolder ? `${visibleOpen.length} open voor ${byId.get(filterHolder)?.name ?? 'deze persoon'}` : `${open.length} open in huis`}>
-        Anytimers
-      </PageTitle>
+      <div className="any-heading">
+        <PageTitle color="var(--g-magenta)" sub={filterHolder ? `${visibleOpen.length} open voor ${byId.get(filterHolder)?.name ?? 'deze persoon'}` : `${open.length} open in huis`}>
+          Anytimers
+        </PageTitle>
+        <button
+          type="button"
+          className={`btn ghost filter-toggle ${filterHolder ? 'is-active' : ''}`}
+          aria-label={showFilter ? 'Filter verbergen' : 'Filter tonen'}
+          aria-expanded={showFilter}
+          aria-controls="anytimer-filter"
+          title={filterHolder ? `Filter actief voor ${byId.get(filterHolder)?.name ?? 'deze persoon'}` : 'Filter op wie mag opeisen'}
+          onClick={() => setShowFilter((show) => !show)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 5h16l-6 7v6l-4 2v-8L4 5Z" />
+          </svg>
+        </button>
+      </div>
+
+      {showFilter && <label className="field" id="anytimer-filter">
+        <span>Filter op wie mag opeisen</span>
+        <select className="select" value={filterHolder} onChange={(e) => setFilterHolder(e.target.value)} aria-label="Filter op wie mag opeisen">
+          <option value="">Iedereen</option>
+          {housemates
+            .filter((h) => h.active || rows.some((a) => a.owed_to === h.id))
+            .sort((a, b) => a.name.localeCompare(b.name, 'nl'))
+            .map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+        </select>
+      </label>}
 
       <form className="card any-form" onSubmit={add}>
         <div className="any-sentence">
@@ -82,17 +109,6 @@ export default function Anys() {
           </button>
         </div>
       </form>
-
-      <label className="field">
-        <span>Filter op wie mag opeisen</span>
-        <select className="select" value={filterHolder} onChange={(e) => setFilterHolder(e.target.value)} aria-label="Filter op wie mag opeisen">
-          <option value="">Iedereen</option>
-          {housemates
-            .filter((h) => h.active || rows.some((a) => a.owed_to === h.id))
-            .sort((a, b) => a.name.localeCompare(b.name, 'nl'))
-            .map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-        </select>
-      </label>
 
       {pairs.length === 0 ? (
         <section className="card">

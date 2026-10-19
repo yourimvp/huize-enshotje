@@ -1595,3 +1595,31 @@ table {
 .purchase-presets { display: flex; flex-wrap: wrap; gap: 8px; }
 .purchase-presets .selected { background: var(--g-orange); color: var(--text); border-color: var(--g-orange); }
 .settlement-card { overflow-x: auto; }
+
+.any-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.filter-toggle {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+}
+.filter-toggle.is-active {
+  color: var(--g-magenta);
+  border-color: var(--g-magenta);
+}
+.filter-toggle.is-active::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
