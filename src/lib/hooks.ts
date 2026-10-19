@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { list, subscribe, type ListOptions } from './db'
+import { DEMO, list, subscribe, supabase, type ListOptions } from './db'
 import type { TableName, Tables } from './types'
 
 /** Laadt een tabel en houdt hem live bij. */
@@ -26,7 +26,12 @@ export function useTable<T extends TableName>(table: T, opts: ListOptions = {}) 
     // Bij terugkomen naar de app (telefoon uit slaapstand) opnieuw ophalen
     const onFocus = () => document.visibilityState === 'visible' && reload()
     document.addEventListener('visibilitychange', onFocus)
+    // Na in- of uitloggen mag je meer of minder zien
+    const auth = DEMO ? null : supabase!.auth.onAuthStateChange((e) => {
+      if (e === 'SIGNED_IN' || e === 'SIGNED_OUT') setTimeout(reload, 0)
+    })
     return () => {
+      auth?.data.subscription.unsubscribe()
       off()
       document.removeEventListener('visibilitychange', onFocus)
     }

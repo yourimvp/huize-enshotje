@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useHouse } from '../lib/house'
+import { insert } from '../lib/db'
+import { GameShell, Kast, PlayerSelect } from '../components/game'
 
 const EGG = 'M100 12 C150 12 186 100 186 158 C186 218 148 250 100 250 C52 250 14 218 14 158 C14 100 50 12 100 12 Z'
 const CRACKS = 16
@@ -31,7 +32,7 @@ function newEgg() {
 }
 
 export default function Ei() {
-  const { active, byId } = useHouse()
+  const { byId } = useHouse()
   const [egg, setEgg] = useState(newEgg)
   const [taps, setTaps] = useState(0)
   const [wobble, setWobble] = useState(0)
@@ -54,6 +55,9 @@ export default function Ei() {
     setTaps(next)
     setWobble((w) => w + 1)
     navigator.vibrate?.(next >= egg.breakAt ? [80, 40, 160] : 15)
+    if (next >= egg.breakAt && players.length) {
+      insert('game_events', { kind: 'egg_break', housemate_id: players[(next - 1) % players.length], value: next })
+    }
   }
 
   function reset() {
@@ -61,31 +65,14 @@ export default function Ei() {
     setTaps(0)
   }
 
-  const togglePlayer = (id: string) => setPlayers((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
-
   return (
-    <div className="page">
-      <Link to="/spellen" className="link small">
-        ← Spellen
-      </Link>
-      <header className="game-head">
-        <h1>🥚 Crack the egg</h1>
-        <p className="muted">Tik om de beurt op het ei. Niemand weet na hoeveel tikken hij breekt. Wie hem breekt, drinkt.</p>
-      </header>
-
+    <GameShell icon="🥚" title="Crack the egg" intro="Tik om de beurt op het ei. Niemand weet na hoeveel tikken hij breekt. Wie hem breekt, drinkt.">
       <section className="card">
-        <h2 className="card-title">Spelers (optioneel)</h2>
-        <div className="picker">
-          {active.map((h) => (
-            <button key={h.id} className={`chip plain ${players.includes(h.id) ? 'on' : ''}`} onClick={() => togglePlayer(h.id)} disabled={taps > 0 && !broken}>
-              {players.includes(h.id) && <b className="order">{players.indexOf(h.id) + 1}</b>}
-              {h.name}
-            </button>
-          ))}
-        </div>
+        <h2 className="card-title">Spelers (optioneel, in volgorde)</h2>
+        <PlayerSelect value={players} onChange={(p) => (taps === 0 || broken) && setPlayers(p)} />
       </section>
 
-      <section className="egg-stage">
+      <Kast className="egg-stage">
         {!broken ? (
           <p className="egg-turn">{turn ? <>Aan de beurt: <b>{byId.get(turn)?.name}</b></> : 'Tik op het ei'}</p>
         ) : (
@@ -105,7 +92,9 @@ export default function Ei() {
             </defs>
             {!broken ? (
               <g key={wobble} className="egg-body">
-                <path d={EGG} fill="url(#egg-shade)" stroke="#cdb994" strokeWidth="2" />
+                <path d={EGG} fill="url(#egg-shade)" />
+                <path d={EGG} fill="url(#satin)" opacity=".5" />
+                <path d={EGG} fill="none" stroke="#b9a37a" strokeWidth="2" strokeDasharray="5 3" />
                 <g clipPath="url(#egg-clip)">
                   {egg.cracks.slice(0, visible).map((d, i) => (
                     <path key={i} d={d} fill="none" stroke="#5c4a2e" strokeWidth={2.4 - i * 0.06} strokeLinecap="round" strokeLinejoin="round" />
@@ -137,7 +126,7 @@ export default function Ei() {
             Nieuw ei
           </button>
         )}
-      </section>
-    </div>
+      </Kast>
+    </GameShell>
   )
 }

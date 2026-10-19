@@ -5,15 +5,19 @@ import { useTable } from '../lib/hooks'
 import { useHouse } from '../lib/house'
 import { ago } from '../lib/format'
 import { Avatar, PageTitle } from '../components/decor'
+import { Lapje } from '../components/game'
 import { ConfirmButton, Empty, PersonPicker, PlusIcon } from '../components/ui'
 
 const GAMES = [
-  { to: '/spellen/paardenrace', icon: '🏇', title: 'Paardenrace', desc: 'Kies een aas, zet slokken in en kijk welk paard wint.', color: 'var(--g-green)' },
-  { to: '/spellen/chwazi', icon: '☝️', title: 'Chwazi', desc: 'Iedereen een vinger op het scherm. Eén iemand wordt gekozen.', color: 'var(--g-blue)' },
-  { to: '/spellen/ei', icon: '🥚', title: 'Crack the egg', desc: 'Tik om de beurt. Wie het ei breekt, drinkt.', color: 'var(--g-yellow)' },
+  { to: '/spellen/paardenrace', icon: '🏇', title: 'Paardenrace', desc: 'Kies een aas, zet slokken in en kijk welk paard wint.', color: '#2fa463' },
+  { to: '/spellen/rad', icon: '🎡', title: 'Radjes', desc: 'Je eigen radjes: strafrad, wat eten we, wie haalt bier.', color: '#e0468f' },
+  { to: '/spellen/duel', icon: '🤠', title: 'Cowboy-duel', desc: 'Wie trekt het snelst? Te vroeg is misfire.', color: '#ee7432' },
+  { to: '/spellen/dobbelstenen', icon: '🎲', title: 'Dobbelstenen', desc: 'Gooien, vastzetten, opnieuw. Met Mexen-stand.', color: '#3a7be0' },
+  { to: '/spellen/ei', icon: '🥚', title: 'Crack the egg', desc: 'Tik om de beurt. Wie het ei breekt, drinkt.', color: '#f2b51f' },
+  { to: '/spellen/chwazi', icon: '☝️', title: 'Chwazi', desc: 'Iedereen een vinger op het scherm. Eén iemand wordt gekozen.', color: '#7a4bd1' },
 ]
 
-const KNOWN = ['Paardenrace', 'Kingsen', 'Bussen', 'Beerpong', 'Klaverjassen', 'Mario Kart', 'FIFA', 'Mexen', 'Pesten', 'Darten']
+const KNOWN = ['Paardenrace', 'Duel', 'Kingsen', 'Bussen', 'Beerpong', 'Klaverjassen', 'Mario Kart', 'FIFA', 'Mexen', 'Pesten', 'Darten']
 
 export default function Spellen() {
   const { rows } = useTable('game_results')
@@ -51,9 +55,7 @@ export default function Spellen() {
       <div className="game-grid">
         {GAMES.map((g) => (
           <Link key={g.to} to={g.to} className="card game-card" style={{ ['--c' as string]: g.color }}>
-            <span className="game-icon" aria-hidden>
-              {g.icon}
-            </span>
+            <Lapje icon={g.icon} color={g.color} size={56} />
             <strong>{g.title}</strong>
             <span className="meta">{g.desc}</span>
           </Link>

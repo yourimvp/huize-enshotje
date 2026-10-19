@@ -7,6 +7,9 @@ export interface Housemate extends Base {
   name: string
   color: string
   active: boolean
+  user_id?: string | null
+  pin_version?: number
+  is_admin?: boolean
 }
 
 export interface ShoppingItem extends Base {
@@ -16,6 +19,7 @@ export interface ShoppingItem extends Base {
   checked_at: string | null
   checked_by: string | null
   cleared: boolean
+  added_by?: string | null
 }
 
 export interface DrinkType extends Base {
@@ -78,6 +82,23 @@ export interface AchievementUnlock extends Base {
   key: string
 }
 
+export interface GameEvent extends Base {
+  kind: string // 'egg_break' | 'duel_misfire' | 'duel_reaction' | 'wheel_spin' …
+  housemate_id: string
+  value: number | null
+}
+
+export interface WheelSegment {
+  label: string
+  color?: string
+  action?: 'any_for_spinner' | 'any_on_spinner'
+}
+
+export interface Wheel extends Base {
+  name: string
+  segments: WheelSegment[]
+}
+
 export interface Tables {
   housemates: Housemate
   shopping_items: ShoppingItem
@@ -91,6 +112,8 @@ export interface Tables {
   events: AgendaEvent
   game_results: GameResult
   achievement_unlocks: AchievementUnlock
+  game_events: GameEvent
+  wheels: Wheel
 }
 
 export type TableName = keyof Tables

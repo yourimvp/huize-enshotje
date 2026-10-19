@@ -1,19 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import confetti from 'canvas-confetti'
 import { unlockAchievement } from '../lib/db'
 import { useTable } from '../lib/hooks'
 import { useHouse } from '../lib/house'
-import { ACHIEVEMENTS, BY_KEY, TIER_COLOR, computeStats, type Achievement } from '../lib/achievements'
+import { ACHIEVEMENTS, BY_KEY, TIER_COLOR, type Achievement } from '../lib/achievements'
+import { useStats } from '../lib/useStats'
 import type { AchievementUnlock } from '../lib/types'
 
-export function Medal({ a, size = 64, locked = false }: { a: Achievement; size?: number; locked?: boolean }) {
+export function Medal({ a, size = 64, locked = false, hidden = false }: { a: Achievement; size?: number; locked?: boolean; hidden?: boolean }) {
   return (
     <span
       className={`medal ${locked ? 'locked' : ''} tier-${a.tier}`}
       style={{ width: size, height: size, fontSize: size * 0.42, ['--tier' as string]: TIER_COLOR[a.tier] }}
       aria-hidden
     >
-      <span className="medal-icon">{a.icon}</span>
+      <span className="medal-icon">{hidden ? '?' : a.icon}</span>
     </span>
   )
 }
@@ -52,15 +53,12 @@ export function fireConfetti() {
  */
 export function AchievementWatcher() {
   const { housemates, byId } = useHouse()
-  const tallies = useTable('drink_tallies').rows
-  const games = useTable('game_results').rows
-  const shopping = useTable('shopping_items').rows
+  const { stats } = useStats()
   const unlocks = useTable('achievement_unlocks')
   const attempted = useRef(new Set<string>())
   const [queue, setQueue] = useState<AchievementUnlock[]>([])
 
   // 1. Nieuwe prestaties vastleggen
-  const stats = useMemo(() => computeStats(housemates, tallies, games, shopping), [housemates, tallies, games, shopping])
   useEffect(() => {
     if (unlocks.loading || housemates.length === 0) return
     const have = new Set(unlocks.rows.map((u) => `${u.housemate_id}|${u.key}`))

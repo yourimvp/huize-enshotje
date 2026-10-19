@@ -1,86 +1,99 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import type { Session } from '@supabase/supabase-js'
+import { DEMO, supabase } from './db'
 import { useHouse } from './house'
-import { Avatar } from '../components/decor'
+import type { Housemate } from './types'
 
 /**
- * Geen account: deze telefoon onthoudt alleen wie je bent, zodat afgestreepte
- * boodschappen bij de juiste persoon tellen.
+ * Accounts zonder gedoe: je kiest je naam en een pincode van 4 cijfers.
+ * Onder water is dat een Supabase-account met een nep-e-mailadres; de sessie
+ * blijft in de browser bewaard, dus je blijft ingelogd.
  */
 interface MeCtx {
+  ready: boolean
+  session: Session | null
+  me: Housemate | null
   meId: string | null
-  setMe: (id: string | null) => void
-  /** Geeft je id; vraagt het eerst als het nog niet bekend is. */
+  isAdmin: boolean
+  /** Voor oude aanroepen: geeft gewoon je id terug. */
   requireMe: () => Promise<string | null>
+  login: (h: Housemate, pin: string) => Promise<void>
+  claim: (h: Housemate, pin: string) => Promise<void>
+  logout: () => Promise<void>
+  resetPin: (h: Housemate) => Promise<void>
 }
 
 const Ctx = createContext<MeCtx | null>(null)
-const KEY = 'enshotje:me'
 
-function read(): string | null {
-  try {
-    return localStorage.getItem(KEY)
-  } catch {
-    return null
-  }
-}
+const emailFor = (h: Housemate) => `h${h.id.replace(/-/g, '')}v${h.pin_version ?? 1}@huizeenshotje.nl`
+const passwordFor = (pin: string) => `enshotje-pin-${pin}`
 
 export function MeProvider({ children }: { children: ReactNode }) {
-  const { active, byId } = useHouse()
-  const [meId, setMeId] = useState<string | null>(read)
-  const [asking, setAsking] = useState(false)
-  const resolver = useRef<((id: string | null) => void) | null>(null)
+  const { housemates } = useHouse()
+  const [session, setSession] = useState<Session | null>(null)
+  const [ready, setReady] = useState(DEMO)
 
-  const setMe = useCallback((id: string | null) => {
-    try {
-      if (id) localStorage.setItem(KEY, id)
-      else localStorage.removeItem(KEY)
-    } catch {
-      /* ignore */
-    }
-    setMeId(id)
+  useEffect(() => {
+    if (DEMO) return
+    supabase!.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setReady(true)
+    })
+    const { data } = supabase!.auth.onAuthStateChange((_e, s) => setSession(s))
+    return () => data.subscription.unsubscribe()
   }, [])
 
-  const validMe = meId && byId.get(meId)?.active ? meId : null
+  const me = useMemo(() => {
+    if (DEMO) return housemates.find((h) => h.active) ?? null
+    const uid = session?.user.id
+    return (uid && housemates.find((h) => h.user_id === uid)) || null
+  }, [housemates, session])
 
-  const requireMe = useCallback(() => {
-    if (validMe) return Promise.resolve(validMe)
-    setAsking(true)
-    return new Promise<string | null>((res) => {
-      resolver.current = res
-    })
-  }, [validMe])
+  const login = useCallback(async (h: Housemate, pin: string) => {
+    const { error } = await supabase!.auth.signInWithPassword({ email: emailFor(h), password: passwordFor(pin) })
+    if (error) throw new Error(error.message.includes('Invalid') ? 'Verkeerde pincode' : error.message)
+  }, [])
 
-  const answer = (id: string | null) => {
-    if (id) setMe(id)
-    setAsking(false)
-    resolver.current?.(id)
-    resolver.current = null
+  const claim = useCallback(async (h: Housemate, pin: string) => {
+    const email = emailFor(h)
+    const password = passwordFor(pin)
+    let { data, error } = await supabase!.auth.signUp({ email, password })
+    // Bestaat het account al (half afgemaakte eerdere poging)? Dan gewoon inloggen.
+    if (error && /registered|exists/i.test(error.message)) {
+      ;({ data, error } = await supabase!.auth.signInWithPassword({ email, password }))
+      if (error) throw new Error('Dit profiel heeft al een pincode. Vraag de beheerder om een reset.')
+    } else if (error) throw new Error(error.message)
+    if (!data.session) throw new Error('Inloggen lukte niet: staat "Confirm email" nog aan in Supabase?')
+    const { error: e2 } = await supabase!.rpc('claim_profile', { target: h.id })
+    if (e2) {
+      await supabase!.auth.signOut()
+      throw new Error(e2.message)
+    }
+  }, [])
+
+  const logout = useCallback(async () => {
+    if (!DEMO) await supabase!.auth.signOut()
+  }, [])
+
+  const resetPin = useCallback(async (h: Housemate) => {
+    if (DEMO) return
+    const { error } = await supabase!.rpc('reset_pin', { target: h.id })
+    if (error) throw new Error(error.message)
+  }, [])
+
+  const value: MeCtx = {
+    ready,
+    session,
+    me,
+    meId: me?.id ?? null,
+    isAdmin: DEMO || !!me?.is_admin,
+    requireMe: () => Promise.resolve(me?.id ?? null),
+    login,
+    claim,
+    logout,
+    resetPin,
   }
-
-  return (
-    <Ctx.Provider value={{ meId: validMe, setMe, requireMe }}>
-      {children}
-      {asking && (
-        <div className="modal-backdrop" onClick={() => answer(null)}>
-          <div className="modal card" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Wie ben jij?">
-            <h2 className="modal-title">Wie ben jij?</h2>
-            <p className="hint">Deze telefoon onthoudt het, dan tellen je acties mee voor de prijzenkast.</p>
-            <div className="who-grid">
-              {active.map((h) => (
-                <button key={h.id} className="who" onClick={() => answer(h.id)}>
-                  <Avatar name={h.name} color={h.color} size={36} />
-                  <span>{h.name}</span>
-                </button>
-              ))}
-            </div>
-            <button className="btn ghost small" onClick={() => answer(null)}>
-              Annuleer
-            </button>
-          </div>
-        </div>
-      )}
-    </Ctx.Provider>
-  )
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 
 export function useMe() {

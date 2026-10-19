@@ -118,6 +118,24 @@ const game_results: Tables['game_results'][] = [
   game('g5', 'Kingsen', 0, 5),
 ]
 
+const wheels: Tables['wheels'][] = [
+  {
+    id: 'w0',
+    name: 'Strafrad',
+    created_at: ago(100),
+    segments: [
+      { label: 'Iedereen drinkt' },
+      { label: 'Links drinkt' },
+      { label: 'Rechts drinkt' },
+      { label: 'Draaier 2 slokken' },
+      { label: 'Deel 3 slokken uit' },
+      { label: 'Nieuwe huisregel' },
+      { label: 'Anytimer voor de draaier', action: 'any_for_spinner' },
+      { label: 'Waterval' },
+    ],
+  },
+]
+
 export const demoSeed: { [K in TableName]?: Tables[K][] } = {
   housemates,
   drink_types,
@@ -130,4 +148,5 @@ export const demoSeed: { [K in TableName]?: Tables[K][] } = {
   quotes,
   events,
   game_results,
+  wheels,
 }

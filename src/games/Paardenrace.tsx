@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { insert } from '../lib/db'
 import { useHouse } from '../lib/house'
 import { Avatar } from '../components/decor'
 import { fireConfetti } from '../components/Achievements'
+import { GameShell, Kast, Uitslag } from '../components/game'
+import Horse, { type Coat } from './Horse'
 
 type Suit = 'S' | 'H' | 'D' | 'C'
 interface Card {
@@ -20,6 +21,13 @@ const SYMBOL: Record<Suit, string> = { S: '♠', H: '♥', D: '♦', C: '♣' }
 const NAME: Record<Suit, string> = { S: 'Schoppen', H: 'Harten', D: 'Ruiten', C: 'Klaveren' }
 const RED = (s: Suit) => s === 'H' || s === 'D'
 const RANK = (r: number) => ({ 11: 'B', 12: 'V', 13: 'H' })[r] ?? String(r)
+const COATS: Record<Suit, Coat> = {
+  S: { body: '#3a2b22', dark: '#1d1510', mane: '#120d09' },
+  H: { body: '#a4552d', dark: '#6b3417', mane: '#4a2410' },
+  D: { body: '#c8a06a', dark: '#8a6a3c', mane: '#f1e7d2' },
+  C: { body: '#d9d5cd', dark: '#9b958a', mane: '#8b857a' },
+}
+const CLOTH: Record<Suit, string> = { S: '#3a7be0', H: '#db3b47', D: '#ee7432', C: '#2fa463' }
 const HURDLES = 6
 const FINISH = HURDLES + 1
 
@@ -42,12 +50,15 @@ interface Race {
   current: Card | null
   message: string
   winner: Suit | null
+  moved: Suit | null
+  setback: Suit | null
+  tick: number
 }
 
 function newRace(): Race {
   const deck = shuffled()
   const hurdles = deck.splice(0, HURDLES)
-  return { deck, discard: [], hurdles, flipped: 0, pos: { S: 0, H: 0, D: 0, C: 0 }, current: null, message: 'Trek de eerste kaart', winner: null }
+  return { deck, discard: [], hurdles, flipped: 0, pos: { S: 0, H: 0, D: 0, C: 0 }, current: null, message: 'Trek de eerste kaart', winner: null, moved: null, setback: null, tick: 0 }
 }
 
 function step(r: Race): Race {
@@ -63,17 +74,19 @@ function step(r: Race): Race {
   const pos = { ...r.pos, [card.suit]: r.pos[card.suit] + 1 }
   let message = `${NAME[card.suit]} gaat vooruit`
   if (pos[card.suit] >= FINISH) {
-    return { ...r, deck, discard, pos, current: card, winner: card.suit, message: `${NAME[card.suit]} wint!` }
+    return { ...r, deck, discard, pos, current: card, winner: card.suit, message: `${NAME[card.suit]} wint!`, moved: card.suit, setback: null, tick: r.tick + 1 }
   }
   let flipped = r.flipped
+  let setback: Suit | null = null
   // Zodra alle paarden een hindernis voorbij zijn, gaat die kaart open
   while (flipped < HURDLES && Math.min(...SUITS.map((s) => pos[s])) >= flipped + 1) {
     const h = r.hurdles[flipped]
     pos[h.suit] = Math.max(0, pos[h.suit] - 1)
+    setback = h.suit
     message = `Hindernis ${flipped + 1}: ${NAME[h.suit]} moet een stap terug!`
     flipped++
   }
-  return { ...r, deck, discard, pos, flipped, current: card, message }
+  return { ...r, deck, discard, pos, flipped, current: card, message, moved: card.suit, setback, tick: r.tick + 1 }
 }
 
 export default function Paardenrace() {
@@ -81,15 +94,25 @@ export default function Paardenrace() {
   const [bets, setBets] = useState<Record<string, Bet>>({})
   const [race, setRace] = useState<Race | null>(null)
   const [auto, setAuto] = useState(false)
+  const [anim, setAnim] = useState<{ moved: Suit | null; setback: Suit | null; tick: number }>({ moved: null, setback: null, tick: 0 })
   const logged = useRef(false)
 
   const players = Object.entries(bets)
 
   useEffect(() => {
     if (!auto || !race || race.winner) return
-    const t = setTimeout(() => setRace((r) => (r ? step(r) : r)), 950)
+    const t = setTimeout(() => setRace((r) => (r ? step(r) : r)), 1100)
     return () => clearTimeout(t)
   }, [auto, race])
+
+  // Galop-animatie voor het paard dat net bewoog
+  useEffect(() => {
+    if (!race?.tick) return
+    setAnim({ moved: race.moved, setback: race.setback, tick: race.tick })
+    const t = setTimeout(() => setAnim((a) => (a.tick === race.tick ? { moved: null, setback: null, tick: a.tick } : a)), 750)
+    if (race.setback) navigator.vibrate?.(60)
+    return () => clearTimeout(t)
+  }, [race?.tick])
 
   useEffect(() => {
     if (!race?.winner || logged.current) return
@@ -121,14 +144,15 @@ export default function Paardenrace() {
 
   if (!race)
     return (
-      <div className="page">
-        <Link to="/spellen" className="link small">
-          ← Spellen
-        </Link>
-        <header className="game-head">
-          <h1>🏇 Paardenrace</h1>
-          <p className="muted">Kies per speler een paard en hoeveel slokken je inzet. Winnaars delen hun slokken uit, verliezers drinken ze.</p>
-        </header>
+      <GameShell icon="🏇" title="Paardenrace" intro="Kies per speler een paard en zet slokken in. Winnaars delen hun slokken uit, verliezers drinken ze.">
+        <Kast className="stal">
+          {SUITS.map((s) => (
+            <div key={s} className="stal-horse">
+              <Horse coat={COATS[s]} cloth={CLOTH[s]} symbol={SYMBOL[s]} width={78} />
+              <span>{NAME[s]}</span>
+            </div>
+          ))}
+        </Kast>
         <section className="card">
           <h2 className="card-title">Inzetten</h2>
           <ul className="list">
@@ -142,7 +166,8 @@ export default function Paardenrace() {
                     {SUITS.map((s) => (
                       <button
                         key={s}
-                        className={`suit-btn ${RED(s) ? 'red' : ''} ${b?.suit === s ? 'on' : ''}`}
+                        className={`suit-btn ${b?.suit === s ? 'on' : ''}`}
+                        style={{ ['--c' as string]: CLOTH[s] }}
                         onClick={() => toggleSuit(h.id, s)}
                         aria-label={`${h.name} op ${NAME[s]}`}
                       >
@@ -169,14 +194,22 @@ export default function Paardenrace() {
             Start de race ({players.length} {players.length === 1 ? 'speler' : 'spelers'})
           </button>
         </section>
-      </div>
+      </GameShell>
     )
 
-  const winners = race.winner ? players.filter(([, b]) => b.suit === race.winner) : []
-  const losers = race.winner ? players.filter(([, b]) => b.suit !== race.winner) : []
+  const lines = race.winner
+    ? [
+        ...players
+          .filter(([, b]) => b.suit === race.winner)
+          .map(([id, b]) => ({ id, name: byId.get(id)?.name ?? '?', text: `deelt ${b.slokken} ${b.slokken === 1 ? 'slok' : 'slokken'} uit`, kind: 'win' as const })),
+        ...players
+          .filter(([, b]) => b.suit !== race.winner)
+          .map(([id, b]) => ({ id, name: byId.get(id)?.name ?? '?', text: `drinkt ${b.slokken} ${b.slokken === 1 ? 'slok' : 'slokken'}`, kind: 'drink' as const })),
+      ]
+    : []
 
   return (
-    <div className="page">
+    <GameShell icon="🏇" title="Paardenrace">
       <div className="game-topbar">
         <button className="link small" onClick={() => (setRace(null), setAuto(false))}>
           ← Inzetten
@@ -184,7 +217,7 @@ export default function Paardenrace() {
         <span className="meta">{race.deck.length} kaarten over</span>
       </div>
 
-      <section className="card race">
+      <Kast className="race">
         <div className="track">
           <div className="lane hurdles">
             <span className="lane-label" />
@@ -209,12 +242,21 @@ export default function Paardenrace() {
           </div>
           {SUITS.map((s) => (
             <div key={s} className={`lane ${race.winner === s ? 'won' : ''}`}>
-              <span className={`lane-label ${RED(s) ? 'red' : ''}`}>{SYMBOL[s]}</span>
+              <span className="lane-label" style={{ background: CLOTH[s] }}>
+                {SYMBOL[s]}
+              </span>
               {Array.from({ length: FINISH + 1 }, (_, col) => (
-                <span key={col} className={`cell ${col === FINISH ? 'finish' : ''}`} />
+                <span key={col} className={`cell ${col === FINISH ? 'finish' : ''} ${col >= 1 && col <= HURDLES ? 'fence' : ''}`} />
               ))}
               <span className="horse" style={{ ['--pos' as string]: race.pos[s] }}>
-                <span className={`pcard ${RED(s) ? 'red' : ''}`}>A{SYMBOL[s]}</span>
+                <Horse
+                  coat={COATS[s]}
+                  cloth={CLOTH[s]}
+                  symbol={SYMBOL[s]}
+                  running={anim.moved === s || (race.winner === s)}
+                  stumble={anim.setback === s}
+                  width={62}
+                />
               </span>
             </div>
           ))}
@@ -222,15 +264,17 @@ export default function Paardenrace() {
         <p className="race-msg" aria-live="polite">
           {race.message}
         </p>
-      </section>
+      </Kast>
 
       {!race.winner ? (
         <div className="race-controls">
-          {race.current && (
-            <span key={race.discard.length} className={`pcard big flip ${RED(race.current.suit) ? 'red' : ''}`}>
+          {race.current ? (
+            <span key={race.tick} className={`pcard big flip ${RED(race.current.suit) ? 'red' : ''}`}>
               {RANK(race.current.rank)}
               <b>{SYMBOL[race.current.suit]}</b>
             </span>
+          ) : (
+            <span className="pcard big back" />
           )}
           <div className="race-buttons">
             <button className="btn primary big-btn" onClick={() => setRace((r) => (r ? step(r) : r))} disabled={auto}>
@@ -242,41 +286,22 @@ export default function Paardenrace() {
           </div>
         </div>
       ) : (
-        <section className="card race-result">
-          <h2 className="result-title">
-            <span className={RED(race.winner) ? 'red' : ''}>{SYMBOL[race.winner]}</span> {NAME[race.winner]} wint!
-          </h2>
-          {winners.length > 0 && (
-            <div>
-              <p className="card-title">Mogen uitdelen</p>
-              {winners.map(([id, b]) => (
-                <p key={id} className="result-line">
-                  <b>{byId.get(id)?.name}</b> deelt {b.slokken} {b.slokken === 1 ? 'slok' : 'slokken'} uit
-                </p>
-              ))}
-            </div>
-          )}
-          {losers.length > 0 && (
-            <div>
-              <p className="card-title">Drinken</p>
-              {losers.map(([id, b]) => (
-                <p key={id} className="result-line">
-                  <b>{byId.get(id)?.name}</b> drinkt {b.slokken} {b.slokken === 1 ? 'slok' : 'slokken'}
-                </p>
-              ))}
-            </div>
-          )}
-          {winners.length > 0 && <p className="hint">Winnaars staan bijgeschreven bij Spellen en tellen mee voor de prijzenkast.</p>}
-          <div className="race-buttons">
-            <button className="btn primary" onClick={start}>
-              Nog een ronde
-            </button>
-            <button className="btn ghost" onClick={() => setRace(null)}>
-              Inzetten wijzigen
-            </button>
-          </div>
-        </section>
+        <Uitslag
+          title={
+            <>
+              <span style={{ color: CLOTH[race.winner] }}>{SYMBOL[race.winner]}</span> {NAME[race.winner]} wint!
+            </>
+          }
+          lines={lines}
+        >
+          <button className="btn primary" onClick={start}>
+            Nog een ronde
+          </button>
+          <button className="btn ghost" onClick={() => setRace(null)}>
+            Inzetten wijzigen
+          </button>
+        </Uitslag>
       )}
-    </div>
+    </GameShell>
   )
 }

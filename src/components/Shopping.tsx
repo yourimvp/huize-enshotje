@@ -5,10 +5,12 @@ import type { ShoppingItem } from '../lib/types'
 import { useMe } from '../lib/me'
 import { useHouse } from '../lib/house'
 import { ConfirmButton, Empty, PlusIcon } from './ui'
+import { Avatar } from './decor'
 
 export function AddItem({ autoFocus = false }: { autoFocus?: boolean }) {
   const [name, setName] = useState('')
   const ref = useRef<HTMLInputElement>(null)
+  const { meId } = useMe()
 
   async function add(e: FormEvent) {
     e.preventDefault()
@@ -16,7 +18,7 @@ export function AddItem({ autoFocus = false }: { autoFocus?: boolean }) {
     if (!n) return
     setName('')
     ref.current?.focus()
-    await insert('shopping_items', { name: n, note: null, checked: false })
+    await insert('shopping_items', { name: n, note: null, checked: false, added_by: meId })
   }
 
   return (
@@ -54,6 +56,7 @@ export function ItemRow({ item, showDelete = true }: { item: ShoppingItem; showD
     return toggleItem(item, me)
   }
   const by = item.checked_by ? byId.get(item.checked_by)?.name : null
+  const who = byId.get((item.checked ? item.checked_by : item.added_by) ?? '')
   return (
     <li className={`row item ${item.checked ? 'is-done' : ''}`}>
       <button
@@ -65,10 +68,13 @@ export function ItemRow({ item, showDelete = true }: { item: ShoppingItem; showD
         <strong>{item.name}</strong>
         {showDelete && (
           <span className="meta">
-            {item.checked && item.checked_at ? `gehaald${by ? ` door ${by}` : ''} ${ago(item.checked_at)}` : `erop gezet ${ago(item.created_at)}`}
+            {item.checked && item.checked_at
+              ? `gehaald${by ? ` door ${by}` : ''} ${ago(item.checked_at)}`
+              : `erop gezet${item.added_by && byId.get(item.added_by) ? ` door ${byId.get(item.added_by)!.name}` : ''} ${ago(item.created_at)}`}
           </span>
         )}
       </div>
+      {who && <Avatar name={who.name} color={who.color} size={20} />}
       {showDelete && !item.checked && (
         <ConfirmButton onConfirm={() => remove('shopping_items', item.id)} confirmLabel="Weg?">
           ×

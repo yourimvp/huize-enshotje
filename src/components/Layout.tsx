@@ -3,6 +3,8 @@ import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
 import { DEMO } from '../lib/db'
 import { Bovenlicht, Lights } from './decor'
 import { AchievementWatcher } from './Achievements'
+import { StitchDefs } from './game'
+import { useMe } from '../lib/me'
 
 const MAIN = [
   { to: '/', label: 'Thuis', color: 'var(--g-yellow)', end: true },
@@ -14,7 +16,7 @@ const MORE = [
   { to: '/ranking', label: 'Ranking', icon: '⏱️', color: 'var(--g-blue)' },
   { to: '/anys', label: 'Anys', icon: '🍺', color: 'var(--g-magenta)' },
   { to: '/agenda', label: 'Agenda', icon: '📅', color: 'var(--g-red)' },
-  { to: '/prijzenkast', label: 'Prijzenkast', icon: '🏆', color: 'var(--gold)' },
+  { to: '/achievements', label: 'Achievements', icon: '🏆', color: 'var(--gold)' },
   { to: '/huis', label: 'Huis', icon: '⚙️', color: 'var(--muted)' },
 ]
 export const NAV = [...MAIN, ...MORE.filter((m) => m.to !== '/huis')]
@@ -23,10 +25,13 @@ export default function Layout() {
   const [moreOpen, setMoreOpen] = useState(false)
   const loc = useLocation()
   useEffect(() => setMoreOpen(false), [loc.pathname])
-  const moreActive = MORE.some((m) => loc.pathname.startsWith(m.to))
+  const { me } = useMe()
+  const more = me ? [{ to: `/profiel/${me.id}`, label: 'Mijn profiel', icon: '🙂', color: me.color }, ...MORE] : MORE
+  const moreActive = more.some((m) => loc.pathname.startsWith(m.to))
 
   return (
     <div className="shell">
+      <StitchDefs />
       <Lights />
       <header className="topbar">
         <Link to="/" className="logo">
@@ -60,7 +65,7 @@ export default function Layout() {
       {moreOpen && (
         <div className="sheet-backdrop" onClick={() => setMoreOpen(false)}>
           <nav className="sheet" aria-label="Meer" onClick={(e) => e.stopPropagation()}>
-            {MORE.map((m) => (
+            {more.map((m) => (
               <NavLink key={m.to} to={m.to} className="sheet-item">
                 <span className="sheet-icon" aria-hidden>
                   {m.icon}

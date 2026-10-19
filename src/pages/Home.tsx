@@ -11,11 +11,21 @@ import { AddItem, OpenItems } from '../components/Shopping'
 import type { Quote } from '../lib/types'
 import { localDate } from '../lib/days'
 import { EventRow, sortEvents } from './Agenda'
+import { useMe } from '../lib/me'
+
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 6) return 'Goedenacht'
+  if (h < 12) return 'Goedemorgen'
+  if (h < 18) return 'Goedemiddag'
+  return 'Goedenavond'
+}
 
 export default function Home() {
   const { active } = useHouse()
+  const { me } = useMe()
   const shopping = useTable('shopping_items').rows
-  const openItems = shopping.filter((s) => !s.checked)
+  const openItems = shopping.filter((s) => !s.checked && !s.cleared)
   const events = useTable('events').rows
   const todayEvents = sortEvents(events.filter((e) => e.date === localDate(new Date())))
 
@@ -23,6 +33,11 @@ export default function Home() {
     <div className="page home">
       <section className="hero">
         <div className="hero-text">
+          {me && (
+            <p className="kicker">
+              {greeting()}, <Link to={`/profiel/${me.id}`}>{me.name}</Link>
+            </p>
+          )}
           <h1>
             Huize <em>Enshotje</em>
           </h1>

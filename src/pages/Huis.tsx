@@ -3,12 +3,12 @@ import { DEMO, insert, remove, update } from '../lib/db'
 import { useTable } from '../lib/hooks'
 import { GLASS, useHouse } from '../lib/house'
 import { Avatar, PageTitle } from '../components/decor'
-import { ConfirmButton, PlusIcon, PersonPicker } from '../components/ui'
+import { ConfirmButton, PlusIcon } from '../components/ui'
 import { useMe } from '../lib/me'
 
 export default function Huis() {
   const { housemates } = useHouse()
-  const { meId, setMe } = useMe()
+  const { me, isAdmin, logout, resetPin } = useMe()
   const drinkTypes = useTable('drink_types').rows
   const disciplines = useTable('disciplines').rows
 
@@ -44,9 +44,19 @@ export default function Huis() {
       </PageTitle>
 
       <section className="card">
-        <h2 className="card-title">Deze telefoon is van</h2>
-        <PersonPicker value={meId} onChange={setMe} label="Deze telefoon is van" />
-        <p className="hint">Geen account, alleen zodat afgestreepte boodschappen meetellen voor de prijzenkast.</p>
+        <h2 className="card-title">Jouw account</h2>
+        <div className="account-row">
+          {me && <Avatar name={me.name} color={me.color} size={34} />}
+          <div className="row-main">
+            <strong>Ingelogd als {me?.name ?? '…'}</strong>
+            <span className="meta">Je blijft ingelogd op dit apparaat.</span>
+          </div>
+          {!DEMO && (
+            <ConfirmButton onConfirm={logout} confirmLabel="Zeker?">
+              Uitloggen
+            </ConfirmButton>
+          )}
+        </div>
       </section>
 
       <section className="card">
@@ -56,7 +66,10 @@ export default function Huis() {
             <li key={h.id} className={`row ${h.active ? '' : 'inactive'}`}>
               <Avatar name={h.name} color={h.color} size={26} />
               <div className="row-main">
-                <strong>{h.name}</strong>
+                <strong>
+                  {h.name}
+                  <span className={`acct ${h.user_id ? 'ok' : ''}`}>{h.user_id ? 'heeft pincode' : 'nog geen pincode'}</span>
+                </strong>
                 <span className="swatches">
                   {GLASS.map((g) => (
                     <button
@@ -70,6 +83,11 @@ export default function Huis() {
                   ))}
                 </span>
               </div>
+              {isAdmin && h.user_id && h.id !== me?.id && (
+                <ConfirmButton onConfirm={() => resetPin(h).catch((e) => alert(e.message))} confirmLabel="Reset?">
+                  Pincode
+                </ConfirmButton>
+              )}
               <button className="btn ghost small" onClick={() => update('housemates', h.id, { active: !h.active })}>
                 {h.active ? 'Verhuisd' : 'Terug'}
               </button>
