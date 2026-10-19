@@ -22,7 +22,7 @@ export default function Home() {
           <h1>
             Huize <em>Enshotje</em>
           </h1>
-          <p className="muted">{active.length > 0 ? `${active.length} huisgenoten · één koelkast` : 'Voeg eerst de huisgenoten toe bij Huis, rechtsboven.'}</p>
+          <p className="muted">{active.length > 0 ? `${active.length} huisgenoten · één goudmijn` : 'Voeg eerst de huisgenoten toe bij Huis, rechtsboven.'}</p>
         </div>
         <img src={`${import.meta.env.BASE_URL}huis.webp`} alt="De huisgenoten van Huize Enshotje" className="hero-img" />
         <GlassStrip cells={90} size={11} />
