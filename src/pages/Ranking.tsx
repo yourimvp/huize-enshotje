@@ -3,7 +3,7 @@ import { insert, remove } from '../lib/db'
 import { useTable } from '../lib/hooks'
 import { useHouse } from '../lib/house'
 import { ago, formatMs, parseTime } from '../lib/format'
-import { Avatar, PageTitle, Viltje } from '../components/decor'
+import { Avatar, PageTitle } from '../components/decor'
 import { ConfirmButton, Empty, PersonPicker, Tabs } from '../components/ui'
 import type { Housemate, TimeEntry } from '../lib/types'
 
@@ -55,6 +55,38 @@ function useBest(times: TimeEntry[]) {
 
 const MEDAL = ['Goud', 'Zilver', 'Brons']
 
+function Medal({ name, ms, size }: { name: string; ms: number; size: number }) {
+  const time = formatMs(ms)
+  const leaves = [
+    [39, 89, -35], [33, 83, -45], [28, 76, -55], [25, 68, -70],
+    [24, 59, -85], [25, 50, -100], [28, 42, -115], [33, 35, -130],
+  ]
+  return (
+    <div className="podium-medal" style={{ width: size, height: size }}>
+      <svg className="medal-face" viewBox="0 0 120 120" aria-hidden="true">
+        <circle className="medal-disc" cx="60" cy="60" r="59" />
+        <circle className="medal-rim" cx="60" cy="60" r="50" />
+        {[-1, 1].map((side) => (
+          <g key={side} className="medal-laurel" transform={side === -1 ? 'translate(120 0) scale(-1 1)' : undefined}>
+            <path d="M43 94 C19 77 17 48 37 29" fill="none" stroke="currentColor" strokeWidth="1.3" />
+            {leaves.map(([x, y, angle], i) => (
+              <g key={i} transform={`translate(${x} ${y}) rotate(${angle}) scale(0.72)`}>
+                <path d="M0 0 C-5 -1 -7 -5 -6 -9 C-2 -8 1 -4 0 0Z" />
+                <path d="M0 0 C5 -1 7 -5 6 -9 C2 -8 -1 -4 0 0Z" />
+              </g>
+            ))}
+          </g>
+        ))}
+      </svg>
+      <div className="medal-engraving">
+        <span className="medal-name" title={name}>{name}</span>
+        <span className="medal-time" style={{ fontSize: size * (time.length > 5 ? 0.17 : 0.24) }}>{time}</span>
+        <span className="medal-unit">sec</span>
+      </div>
+    </div>
+  )
+}
+
 function Board({ times }: { times: TimeEntry[] }) {
   const ranked = useBest(times)
   if (ranked.length === 0)
@@ -73,11 +105,7 @@ function Board({ times }: { times: TimeEntry[] }) {
           <div key={x?.t.id ?? `e${i}`} className={`step step-${place[i]} ${x ? '' : 'empty-step'}`} role="group" aria-label={`${place[i]}e plaats · ${MEDAL[place[i] - 1]}`}>
             {x && (
               <div className="step-top">
-                <Viltje ring="var(--medal-dark)" size={place[i] === 1 ? 108 : 88}>
-                  <span className="v-name">{x.h.name}</span>
-                  <span className="v-time">{formatMs(x.t.ms)}</span>
-                  <span className="v-unit">sec</span>
-                </Viltje>
+                <Medal name={x.h.name} ms={x.t.ms} size={place[i] === 1 ? 108 : 88} />
               </div>
             )}
             <div className="block">

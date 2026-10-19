@@ -1241,31 +1241,79 @@ table {
   z-index: 1;
 }
 .step-1 {
-  --medal-light: #fff1ac;
-  --medal-metal: #e8bb45;
-  --medal-dark: #b47f13;
+  --medal-face: #ffca08;
+  --medal-rim: #eaa21b;
+  --medal-ink: #8b5709;
   --place-color: var(--gold);
 }
 .step-2 {
-  --medal-light: #f6f8fc;
-  --medal-metal: #c7cdd5;
-  --medal-dark: #8b929d;
+  --medal-face: #c8c9ca;
+  --medal-rim: #a0a2a5;
+  --medal-ink: #575b61;
   --place-color: var(--silver);
 }
 .step-3 {
-  --medal-light: #f6d2af;
-  --medal-metal: #cf9462;
-  --medal-dark: #975a32;
+  --medal-face: #f3a46c;
+  --medal-rim: #ce8051;
+  --medal-ink: #864826;
   --place-color: var(--bronze);
 }
-.podium .viltje {
-  background:
-    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.65), transparent 55%),
-    linear-gradient(135deg, var(--medal-light), var(--medal-metal) 58%, var(--medal-dark));
-  box-shadow:
-    0 5px 14px rgba(26, 22, 18, 0.2),
-    inset 0 0 0 2px var(--medal-dark),
-    inset 0 0 0 4px var(--medal-light);
+.podium-medal {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  filter: drop-shadow(0 3px 3px rgba(35, 27, 16, 0.1));
+}
+.medal-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.medal-disc { fill: var(--medal-face); }
+.medal-rim {
+  fill: none;
+  stroke: var(--medal-rim);
+  stroke-width: 3.5;
+}
+.medal-laurel {
+  color: var(--medal-rim);
+  fill: currentColor;
+}
+.medal-engraving {
+  position: relative;
+  width: 54%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--medal-ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+  line-height: 1;
+}
+.medal-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.medal-time {
+  font-family: var(--display);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+.medal-unit {
+  margin-top: 3px;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .block {
   position: relative;
