@@ -151,6 +151,11 @@ function QuoteCard() {
   const idx = pool.length ? (((weekIndex() + offset) % pool.length) + pool.length) % pool.length : 0
   const current = pool[idx]
   const nameOf = (q: Quote) => q.said_by_name || (q.said_by ? byId.get(q.said_by)?.name : null) || 'onbekend'
+  const speaker = current && (
+    (current.said_by ? byId.get(current.said_by) : undefined)
+    ?? [...byId.values()].find((h) => h.name.trim().toLocaleLowerCase('nl') === current.said_by_name?.trim().toLocaleLowerCase('nl'))
+  )
+  const quoteColor = speaker?.color ?? 'var(--g-magenta)'
 
   async function add(e: FormEvent) {
     e.preventDefault()
@@ -168,10 +173,10 @@ function QuoteCard() {
   }
 
   return (
-    <section className="card quote-card">
+    <section className="card quote-card" style={{ ['--quote-color' as string]: quoteColor }}>
       <div className="card-head">
         <h2 className="card-title">
-          <span className="dot" style={{ background: 'var(--g-magenta)', color: 'var(--g-magenta)' }} /> Quote van de week
+          <span className="dot" style={{ background: 'var(--quote-color)', color: 'var(--quote-color)' }} /> Quote van de week
         </h2>
         <button className="link small" onClick={() => setAdding((a) => !a)}>
           {adding ? 'Annuleer' : '+ Quote'}
@@ -198,7 +203,7 @@ function QuoteCard() {
 
       {current ? (
         <figure className="quote">
-          <blockquote>{current.text}”</blockquote>
+          <blockquote>{current.text}<span className="quote-mark">”</span></blockquote>
           <figcaption>
             — {nameOf(current)}
             {current.context && <span className="q-context">, {current.context}</span>}

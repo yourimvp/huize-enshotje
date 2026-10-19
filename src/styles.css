@@ -1564,8 +1564,11 @@ table {
   left: -2px;
   top: -10px;
   font-size: 54px;
-  color: var(--g-magenta);
+  color: var(--quote-color, var(--g-magenta));
   line-height: 1;
+}
+.quote-mark {
+  color: var(--quote-color, var(--g-magenta));
 }
 .quote figcaption {
   margin-top: 10px;
