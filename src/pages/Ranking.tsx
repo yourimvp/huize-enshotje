@@ -70,10 +70,10 @@ function Board({ times }: { times: TimeEntry[] }) {
     <>
       <section className="podium" aria-label="Podium">
         {podium.map((x, i) => (
-          <div key={x?.t.id ?? `e${i}`} className={`step step-${place[i]} ${x ? '' : 'empty-step'}`}>
+          <div key={x?.t.id ?? `e${i}`} className={`step step-${place[i]} ${x ? '' : 'empty-step'}`} role="group" aria-label={`${place[i]}e plaats · ${MEDAL[place[i] - 1]}`}>
             {x && (
               <div className="step-top">
-                <Viltje ring={x.h.color} size={place[i] === 1 ? 108 : 88}>
+                <Viltje ring="var(--medal-dark)" size={place[i] === 1 ? 108 : 88}>
                   <span className="v-name">{x.h.name}</span>
                   <span className="v-time">{formatMs(x.t.ms)}</span>
                   <span className="v-unit">sec</span>
@@ -82,7 +82,6 @@ function Board({ times }: { times: TimeEntry[] }) {
             )}
             <div className="block">
               <span>{place[i]}</span>
-              <small>{MEDAL[place[i] - 1]}</small>
             </div>
           </div>
         ))}
