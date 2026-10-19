@@ -1539,3 +1539,7 @@ table {
 .q-context {
   font-style: italic;
 }
+
+.purchase-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.purchase-presets .selected { background: var(--g-orange); color: var(--text); border-color: var(--g-orange); }
+.settlement-card { overflow-x: auto; }

@@ -23,8 +23,7 @@ create table if not exists shopping_items (
 );
 
 -- Turf ----------------------------------------------------------------------
--- Een streepje is een streepje: de inkoop van een maand wordt verdeeld
--- naar het aantal streepjes, ongeacht welk drankje.
+-- Verbruik per categorie × gewogen inkoopprijs per drankje.
 create table if not exists drink_types (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
@@ -35,6 +34,8 @@ create table if not exists drink_types (
 create table if not exists drink_purchases (
   id           uuid primary key default gen_random_uuid(),
   description  text not null,
+  drink_type_id uuid references drink_types(id) on delete set null,
+  quantity     integer check (quantity > 0),
   cost_cents   integer not null check (cost_cents >= 0),
   paid_by      uuid references housemates(id) on delete set null,
   created_at   timestamptz not null default now()

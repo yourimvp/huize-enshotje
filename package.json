@@ -4,7 +4,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "demo": "vite --mode demo"
+    "demo": "vite --mode demo",
+    "test": "node --test tests/turf.test.mjs"
   },
   "dependencies": {
     "@fontsource/dm-serif-display": "^5.3.0",

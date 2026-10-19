@@ -25,6 +25,8 @@ export interface DrinkPurchase extends Base {
   description: string
   cost_cents: number
   paid_by: string | null
+  drink_type_id: string | null
+  quantity: number | null // aantal losse drankjes / shots
 }
 
 export interface DrinkTally extends Base {

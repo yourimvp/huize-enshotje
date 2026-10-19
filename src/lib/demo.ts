@@ -23,10 +23,10 @@ const drink_types: Tables['drink_types'][] = [
 ]
 
 const drink_purchases: Tables['drink_purchases'][] = [
-  { id: 'p0', description: 'Krat Hertog Jan', cost_cents: 1499, paid_by: hid(0), created_at: ago(200) },
-  { id: 'p1', description: 'Krat Hertog Jan', cost_cents: 1529, paid_by: hid(2), created_at: ago(90) },
-  { id: 'p2', description: 'Fles Bozu', cost_cents: 1199, paid_by: hid(3), created_at: ago(60) },
-  { id: 'p3', description: 'Fles Flügel', cost_cents: 899, paid_by: hid(4), created_at: ago(30) },
+  { id: 'p0', description: 'Krat Hertog Jan', drink_type_id: 'd0', quantity: 24, cost_cents: 1499, paid_by: hid(0), created_at: ago(200) },
+  { id: 'p1', description: 'Krat Hertog Jan', drink_type_id: 'd0', quantity: 24, cost_cents: 1529, paid_by: hid(2), created_at: ago(90) },
+  { id: 'p2', description: 'Tray Bozu', drink_type_id: 'd1', quantity: 12, cost_cents: 1199, paid_by: hid(3), created_at: ago(60) },
+  { id: 'p3', description: 'Fles shotjes 700 ml', drink_type_id: 'd2', quantity: 35, cost_cents: 899, paid_by: hid(4), created_at: ago(30) },
 ]
 
 // Streepjes verspreid over ~3 weken, met een drukke huisavond 2 dagen geleden

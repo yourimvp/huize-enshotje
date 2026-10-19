@@ -1,9 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { insert, remove } from '../lib/db'
+import { insert, remove, update } from '../lib/db'
 import { useTable } from '../lib/hooks'
 import { useHouse } from '../lib/house'
 import { ago, euro, inMonth, monthLabel, monthStart, parseEuro } from '../lib/format'
-import { settleMonth } from '../lib/turf'
+import { purchaseComplete, purchasePresets, settleMonth } from '../lib/turf'
 import { Avatar, PageTitle, TallyMarks } from '../components/decor'
 import { ConfirmButton, Empty, PersonSelect, PlusIcon, Tabs, useToast } from '../components/ui'
 import type { DrinkPurchase, DrinkTally, DrinkType } from '../lib/types'
@@ -12,7 +12,7 @@ type Tab = 'strepen' | 'inkoop' | 'afrekening'
 
 export default function Turf() {
   const [tab, setTab] = useState<Tab>('strepen')
-  const types = useTable('drink_types').rows.filter((t) => t.active)
+  const types = useTable('drink_types').rows
   const purchases = useTable('drink_purchases').rows
   const tallies = useTable('drink_tallies').rows
 
@@ -31,11 +31,11 @@ export default function Turf() {
         ]}
       />
       {tab === 'strepen' ? (
-        <Strepen types={types} tallies={tallies} />
+        <Strepen types={types.filter((t) => t.active)} tallies={tallies} />
       ) : tab === 'inkoop' ? (
-        <Inkoop purchases={purchases} />
+        <Inkoop purchases={purchases} types={types} />
       ) : (
-        <Afrekening purchases={purchases} tallies={tallies} />
+        <Afrekening purchases={purchases} tallies={tallies} types={types} />
       )}
     </div>
   )
@@ -52,11 +52,11 @@ function Strepen({ types, tallies }: { types: DrinkType[]; tallies: DrinkTally[]
   const perPerson = useMemo(() => {
     const m = new Map<string, number>()
     for (const t of tallies) {
-      if (!inMonth(t.created_at, month)) continue
+      if (!inMonth(t.created_at, month) || t.drink_type_id !== type?.id) continue
       m.set(t.housemate_id, (m.get(t.housemate_id) ?? 0) + t.count)
     }
     return m
-  }, [tallies, month])
+  }, [tallies, month, type?.id])
 
   const recent = useMemo(() => [...tallies].reverse().slice(0, 15), [tallies])
   const typeName = (id: string | null) => types.find((x) => x.id === id)?.name ?? 'drankje'
@@ -135,176 +135,176 @@ function Strepen({ types, tallies }: { types: DrinkType[]; tallies: DrinkTally[]
   )
 }
 
-function Inkoop({ purchases }: { purchases: DrinkPurchase[] }) {
+function Inkoop({ purchases, types }: { purchases: DrinkPurchase[]; types: DrinkType[] }) {
   const { byId } = useHouse()
   const [desc, setDesc] = useState('')
   const [cost, setCost] = useState('')
   const [paidBy, setPaidBy] = useState('')
-
+  const [typeId, setTypeId] = useState('')
+  const [size, setSize] = useState(1)
+  const [amount, setAmount] = useState('1')
+  const [editing, setEditing] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const type = types.find((t) => t.id === typeId)
+  const presets = type ? purchasePresets(type.name) : []
   const costCents = parseEuro(cost)
-  const valid = desc.trim() && costCents !== null && costCents > 0 && paidBy
+  const quantity = Number(amount) * size
+  const valid = !!type && costCents !== null && costCents >= 0 && !!paidBy && Number.isSafeInteger(quantity) && quantity > 0 && Number.isInteger(Number(amount))
+
+  function reset() {
+    setDesc(''); setCost(''); setAmount('1'); setEditing(null); setError('')
+  }
+
+  function edit(p: DrinkPurchase) {
+    setEditing(p.id); setDesc(p.description); setCost(String(p.cost_cents / 100))
+    setPaidBy(p.paid_by ?? ''); setTypeId(p.drink_type_id ?? '')
+    setSize(1); setAmount(String(p.quantity ?? 1)); setError('')
+    document.getElementById('purchase-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (!valid) return
-    await insert('drink_purchases', { description: desc.trim(), cost_cents: costCents!, paid_by: paidBy })
-    setDesc('')
-    setCost('')
+    if (!valid || busy) return
+    setBusy(true); setError('')
+    try {
+      const row = { description: desc.trim() || type!.name, cost_cents: costCents!, paid_by: paidBy, drink_type_id: typeId, quantity }
+      if (editing) await update('drink_purchases', editing, row)
+      else await insert('drink_purchases', row)
+      reset()
+    } catch {
+      setError('Opslaan is niet gelukt. Je invoer staat er nog; probeer het opnieuw.')
+    } finally { setBusy(false) }
   }
 
   const month = monthStart(new Date())
   const thisMonth = [...purchases].filter((p) => inMonth(p.created_at, month)).reverse()
+  const olderIncomplete = purchases.filter((p) => !inMonth(p.created_at, month) && !purchaseComplete(p))
   const total = thisMonth.reduce((s, p) => s + p.cost_cents, 0)
+
+  function purchaseRow(p: DrinkPurchase) {
+    const category = types.find((t) => t.id === p.drink_type_id)
+    return (
+      <li key={p.id} className="row">
+        <div className="row-main">
+          <strong>{p.description}</strong>
+          <span className="meta">{category?.name ?? 'Categorie ontbreekt'} · {p.quantity ? `${p.quantity} drankjes` : 'Aantal ontbreekt'}</span>
+          <span className="meta">{p.paid_by ? byId.get(p.paid_by)?.name : 'onbekend'} · {ago(p.created_at)}</span>
+        </div>
+        <span className="amount">{euro(p.cost_cents)}</span>
+        <button className="btn ghost small" onClick={() => edit(p)} aria-label={`Bewerk ${p.description}`}>{purchaseComplete(p) ? 'Bewerk' : 'Aanvullen'}</button>
+        <ConfirmButton onConfirm={() => remove('drink_purchases', p.id)}>×</ConfirmButton>
+      </li>
+    )
+  }
 
   return (
     <>
-      <form className="card form" onSubmit={submit}>
-        <h2 className="card-title">Inkoop toevoegen</h2>
-        <input placeholder="Wat? Bijv. krat Hertog Jan" value={desc} onChange={(e) => setDesc(e.target.value)} aria-label="Omschrijving" />
+      <form id="purchase-form" className="card form" onSubmit={submit}>
+        <h2 className="card-title">{editing ? 'Inkoop bewerken' : 'Inkoop toevoegen'}</h2>
+        <label className="field"><span>Categorie</span>
+          <select className="select" value={typeId} onChange={(e) => { setTypeId(e.target.value); setSize(1); setAmount('1') }} required>
+            <option value="">Kies een categorie…</option>
+            {types.filter((t) => t.active || t.id === typeId).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </label>
+        {type && <>
+          <div className="purchase-presets" role="group" aria-label="Verpakking">
+            {presets.map((p) => <button type="button" key={p.quantity} className={`btn ghost small ${size === p.quantity ? 'selected' : ''}`} aria-pressed={size === p.quantity} onClick={() => { setSize(p.quantity); setAmount('1') }}>{p.label}</button>)}
+          </div>
+          <label className="field"><span>{size === 1 ? 'Aantal losse drankjes' : 'Aantal verpakkingen'}</span>
+            <input type="number" min="1" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+          </label>
+          <p className="hint">{Number.isSafeInteger(quantity) && quantity > 0 ? `${quantity} drankjes in ${type.name}` : 'Vul een geldig aantal in.'}{/shot/i.test(type.name) ? ' · 1 shotje = 20 ml.' : ''}</p>
+        </>}
+        <input placeholder="Omschrijving (optioneel), bijv. Hertog Jan" value={desc} onChange={(e) => setDesc(e.target.value)} aria-label="Omschrijving" />
         <div className="field-row">
-          <input inputMode="decimal" placeholder="€ 14,99" value={cost} onChange={(e) => setCost(e.target.value)} aria-label="Bedrag" />
-          <PersonSelect value={paidBy} onChange={setPaidBy} placeholder="Betaald door…" label="Betaald door" />
+          <label className="field"><span>Totaalbedrag</span><input inputMode="decimal" placeholder="€ 14,99" value={cost} onChange={(e) => setCost(e.target.value)} aria-label="Totaalbedrag" required /></label>
+          <label className="field"><span>Voorgeschoten door</span><PersonSelect value={paidBy} onChange={setPaidBy} placeholder="Betaald door…" label="Betaald door" /></label>
         </div>
-        <button className="btn primary" disabled={!valid}>
-          <PlusIcon /> Toevoegen
-        </button>
+        {error && <p role="alert" className="hint">{error}</p>}
+        <button className="btn primary" disabled={!valid || busy}><PlusIcon /> {busy ? 'Opslaan…' : editing ? 'Wijziging opslaan' : 'Toevoegen'}</button>
+        {editing && <button type="button" className="link" onClick={reset}>Annuleren</button>}
       </form>
-
       <section className="card">
-        <div className="card-head">
-          <h2 className="card-title">Deze maand</h2>
-          <span className="pill">{euro(total)}</span>
-        </div>
-        {thisMonth.length === 0 ? (
-          <Empty>Nog niks ingekocht deze maand.</Empty>
-        ) : (
-          <ul className="list">
-            {thisMonth.map((p) => (
-              <li key={p.id} className="row">
-                <div className="row-main">
-                  <strong>{p.description}</strong>
-                  <span className="meta">
-                    {p.paid_by ? byId.get(p.paid_by)?.name : 'onbekend'} · {ago(p.created_at)}
-                  </span>
-                </div>
-                <span className="amount">{euro(p.cost_cents)}</span>
-                <ConfirmButton onConfirm={() => remove('drink_purchases', p.id)}>×</ConfirmButton>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="card-head"><h2 className="card-title">Deze maand</h2><span className="pill">{euro(total)}</span></div>
+        {thisMonth.length === 0 ? <Empty>Nog niks ingekocht deze maand.</Empty> : <ul className="list">{thisMonth.map(purchaseRow)}</ul>}
       </section>
+      {olderIncomplete.length > 0 && <section className="card">
+        <h2 className="card-title">Eerdere inkopen aanvullen</h2>
+        <p className="hint">Deze inkopen missen nog een categorie of aantal. Vul die aan voor een volledige afrekening.</p>
+        <ul className="list">{olderIncomplete.map(purchaseRow)}</ul>
+      </section>}
     </>
   )
 }
 
-function Afrekening({ purchases, tallies }: { purchases: DrinkPurchase[]; tallies: DrinkTally[] }) {
+const unitPrice = (cents: number) => new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(cents / 100)
+
+function Afrekening({ purchases, tallies, types }: { purchases: DrinkPurchase[]; tallies: DrinkTally[]; types: DrinkType[] }) {
   const { housemates } = useHouse()
   const [month, setMonth] = useState(() => monthStart(new Date()))
   const [copied, setCopied] = useState(false)
-
-  const { rows, totalDrinks, totalCost, perStreepje } = useMemo(
-    () => settleMonth(month, housemates, tallies, purchases),
-    [month, housemates, tallies, purchases],
+  const { rows, categories, incomplete, incompletePurchases, totalDrinks, totalCost, consumedCost } = useMemo(
+    () => settleMonth(month, housemates, tallies, purchases, types),
+    [month, housemates, tallies, purchases, types],
   )
   const isCurrent = month.getTime() === monthStart(new Date()).getTime()
-
-  const text = useMemo(() => {
-    const lines = [
-      `Huisdrank ${monthLabel(month)}`,
-      `${euro(totalCost)} ingekocht · ${totalDrinks} streepjes · ${euro(Math.round(perStreepje))} per streepje`,
-      '',
-    ]
-    for (const r of rows) {
-      const s = r.saldo > 0 ? `krijgt ${euro(r.saldo)}` : r.saldo < 0 ? `betaalt ${euro(-r.saldo)}` : 'quitte'
-      lines.push(`- ${r.h.name}: ${r.drinks} streepjes → ${s}`)
-    }
-    return lines.join('\n')
-  }, [rows, month, totalCost, totalDrinks, perStreepje])
+  const text = [
+    `Huisdrank ${monthLabel(month)}`,
+    'Categorieprijzen: alle inkopen tot en met deze maand.',
+    ...categories.map((c) => `${c.type.name}: ${c.price === null ? 'nog geen inkoopprijs' : `${unitPrice(c.price)} per turf`}`),
+    '',
+    ...rows.map((r) => `- ${r.h.name}: ${r.drinks} turven · verbruik ${r.share === null ? 'nog onbekend' : euro(r.share)} · voorgeschoten ${euro(r.paid)}`),
+    '',
+    'Verbruik = per categorie het aantal turven × de gemiddelde inkoopprijs per drankje. Voorschotten staan apart.',
+  ].join('\n')
 
   async function copy() {
+    if (incomplete) return
     try {
       await navigator.clipboard.writeText(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 1800)
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
   }
 
   return (
     <>
       <div className="month-nav">
-        <button className="btn ghost small" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} aria-label="Vorige maand">
-          ←
-        </button>
+        <button className="btn ghost small" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} aria-label="Vorige maand">←</button>
         <strong className="cap">{monthLabel(month)}</strong>
-        <button
-          className="btn ghost small"
-          disabled={isCurrent}
-          onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-          aria-label="Volgende maand"
-        >
-          →
-        </button>
+        <button className="btn ghost small" disabled={isCurrent} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} aria-label="Volgende maand">→</button>
       </div>
-
       <div className="stat-row">
-        <div className="mini-stat">
-          <span className="num-big">{euro(totalCost)}</span>
-          <span>ingekocht</span>
-        </div>
-        <div className="mini-stat">
-          <span className="num-big">{totalDrinks}</span>
-          <span>streepjes</span>
-        </div>
-        <div className="mini-stat">
-          <span className="num-big">{euro(Math.round(perStreepje))}</span>
-          <span>per streepje</span>
-        </div>
+        <div className="mini-stat"><span className="num-big">{euro(totalCost)}</span><span>ingekocht deze maand</span></div>
+        <div className="mini-stat"><span className="num-big">{totalDrinks}</span><span>turven deze maand</span></div>
+        <div className="mini-stat"><span className="num-big">{incomplete ? 'Nog aanvullen' : euro(consumedCost)}</span><span>verbruikt deze maand</span></div>
       </div>
-
       <section className="card">
-        {rows.length === 0 ? (
-          <Empty>Deze maand is er niks gestreept of gekocht.</Empty>
-        ) : (
-          <table className="settle">
-            <thead>
-              <tr>
-                <th>Wie</th>
-                <th className="num">#</th>
-                <th className="num">Deel</th>
-                <th className="num">Betaald</th>
-                <th className="num">Saldo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.h.id}>
-                  <td className="who-cell">{r.h.name}</td>
-                  <td className="num">{r.drinks}</td>
-                  <td className="num">{euro(r.share)}</td>
-                  <td className="num">{r.paid ? euro(r.paid) : '–'}</td>
-                  <td className={`num strong ${r.saldo < 0 ? 'neg' : r.saldo > 0 ? 'pos' : ''}`}>{euro(r.saldo)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <h2 className="card-title">Prijs per turf</h2>
+        <p className="hint">Totale inkoopprijs per categorie ÷ aantal ingekochte drankjes, over alle inkopen tot en met {monthLabel(month)}.</p>
+        <ul className="list">{categories.map((c) => <li className="row" key={c.type.id}>
+          <div className="row-main"><strong>{c.type.name}</strong><span className="meta">{c.quantity ? `${euro(c.cost)} ÷ ${c.quantity} drankjes` : 'Nog geen volledige inkoop'}</span></div>
+          <span className="amount">{c.price === null ? '–' : unitPrice(c.price)}</span>
+        </li>)}</ul>
       </section>
-
-      {rows.length > 0 && (
-        <section className="card">
-          <h2 className="card-title">Voor WieBetaaltWat</h2>
-          <p className="hint">
-            Alle inkoop van de maand wordt verdeeld over alle streepjes. Negatief saldo is bijbetalen, positief krijg je terug.
-          </p>
-          <pre className="export">{text}</pre>
-          <button className="btn primary" onClick={copy}>
-            {copied ? 'Gekopieerd ✓' : 'Kopieer overzicht'}
-          </button>
-        </section>
-      )}
+      {incomplete && <section className="card" role="status">
+        <strong>Afrekening nog niet compleet</strong>
+        <p className="hint">{incompletePurchases.length > 0 ? `${incompletePurchases.length} inkoopregel(s) missen een categorie of aantal. Vul ze aan onder Inkoop. ` : ''}Voor elke geturfde categorie is een inkoopprijs nodig. Bedragen hieronder zijn voorlopig; kopiëren kan zodra alle gegevens compleet zijn.</p>
+      </section>}
+      <section className="card settlement-card">
+        {rows.length === 0 ? <Empty>Deze maand is er niks gestreept of gekocht.</Empty> : <table className="settle">
+          <thead><tr><th>Wie</th><th className="num">Turven</th><th className="num">Verbruik</th><th className="num">Voorgeschoten</th></tr></thead>
+          <tbody>{rows.map((r) => <tr key={r.h.id}><td className="who-cell">{r.h.name}</td><td className="num">{r.drinks}</td><td className="num strong">{r.share === null ? 'Onbekend' : euro(r.share)}</td><td className="num">{r.paid ? euro(r.paid) : '–'}</td></tr>)}</tbody>
+        </table>}
+      </section>
+      {rows.length > 0 && <section className="card">
+        <h2 className="card-title">Overzicht kopiëren</h2>
+        <p className="hint">Je betaalt je eigen verbruik. Voorgeschoten inkoop staat apart; ongebruikte voorraad wordt niet over de turven verdeeld. We ronden pas het totaal per persoon af op centen.</p>
+        <pre className="export">{text}</pre>
+        <button className="btn primary" disabled={incomplete} onClick={copy}>{copied ? 'Gekopieerd ✓' : 'Kopieer overzicht'}</button>
+      </section>}
     </>
   )
 }
