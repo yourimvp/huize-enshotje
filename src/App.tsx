@@ -11,7 +11,7 @@ import Huis from './pages/Huis'
 export default function App() {
   return (
     <HouseProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Home />} />
