@@ -18,12 +18,7 @@ Dit draait de site met nepdata in je browser, zonder Supabase.
 2. **SQL Editor → New query**: plak `supabase/schema.sql` en klik **Run**. Dit maakt alle tabellen, live updates en de startdata (Bier, Bozu, Shotjes, Rietbak, SG).
 3. **Project Settings → API**: kopieer de *Project URL* en de *anon public key*.
 
-Maak een `.env` aan (kopie van `.env.example`):
-
-```
-VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...
-```
+De URL en publieke sleutel van het huisproject staan al in `.env.production` en `.env.development`.
 
 `npm run dev` draait de echte versie lokaal. Voeg de huisgenoten toe via **Huis** rechtsboven.
 

@@ -1,6 +1,5 @@
 # Bouwt de site bij elke push naar main en zet hem via SFTP op Strato.
 # Zet in GitHub → Settings → Secrets and variables → Actions:
-#   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 #   STRATO_HOST (bijv. ssh.strato.de), STRATO_USER (bijv. enshotje.nl), STRATO_PASSWORD
 #   STRATO_PATH (map op de server, bijv. /enshotje)
 name: Deploy naar Strato
@@ -21,9 +20,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Upload via SFTP
         run: |
           sudo apt-get install -y lftp
