@@ -1555,24 +1555,12 @@ table {
   font-style: italic;
   font-size: 26px;
   line-height: 1.2;
-  position: relative;
-  padding-left: 22px;
-}
-.quote blockquote::before {
-  content: '“';
-  position: absolute;
-  left: -2px;
-  top: -10px;
-  font-size: 54px;
-  color: var(--quote-color, var(--g-magenta));
-  line-height: 1;
 }
 .quote-mark {
   color: var(--quote-color, var(--g-magenta));
 }
 .quote figcaption {
   margin-top: 10px;
-  padding-left: 22px;
   color: var(--muted);
   font-size: 14px;
 }
