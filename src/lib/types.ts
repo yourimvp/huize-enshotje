@@ -53,6 +53,8 @@ export interface TimeEntry extends Base {
 export interface Quote extends Base {
   text: string
   said_by: string | null
+  said_by_name: string | null
+  context: string | null
 }
 
 export interface Tables {

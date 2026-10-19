@@ -1530,3 +1530,12 @@ table {
 .quote-form {
   padding-bottom: 4px;
 }
+
+.quote-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.q-context {
+  font-style: italic;
+}

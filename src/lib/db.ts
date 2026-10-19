@@ -19,7 +19,7 @@ type Row<T extends TableName> = Tables[T]
 
 // ── Demo-opslag ─────────────────────────────────────────────────────────────
 const listeners = new Map<TableName, Set<() => void>>()
-const storeKey = (t: TableName) => `enshotje-demo2:${t}`
+const storeKey = (t: TableName) => `enshotje-demo3:${t}`
 
 function demoRead<T extends TableName>(table: T): Row<T>[] {
   try {

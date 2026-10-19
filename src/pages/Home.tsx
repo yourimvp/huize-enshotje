@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom'
 import { insert, remove } from '../lib/db'
 import { useTable } from '../lib/hooks'
 import { useHouse } from '../lib/house'
-import { ago, weekStart } from '../lib/format'
+import { weekStart } from '../lib/format'
 import { GlassStrip } from '../components/decor'
-import { ConfirmButton, Empty, PersonSelect, PlusIcon } from '../components/ui'
+import { ConfirmButton, Empty, PlusIcon } from '../components/ui'
 import { AddItem, OpenItems } from '../components/Shopping'
-import type { DrinkTally, DrinkType } from '../lib/types'
+import type { DrinkTally, DrinkType, Quote } from '../lib/types'
 
 export default function Home() {
   const { active } = useHouse()
@@ -131,23 +131,39 @@ function stats(tallies: DrinkTally[], types: DrinkType[], week: Date) {
   return { total, prev, days, top, byType }
 }
 
+/** Weeknummer sinds een vast punt, zodat iedereen dezelfde quote ziet. */
+function weekIndex(d = new Date()) {
+  return Math.floor((weekStart(d).getTime() - new Date(2024, 0, 1).getTime()) / (7 * 86400_000))
+}
+
 function QuoteCard() {
   const { rows } = useTable('quotes')
-  const { byId } = useHouse()
+  const { active, byId } = useHouse()
   const [adding, setAdding] = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [offset, setOffset] = useState(0)
   const [text, setText] = useState('')
   const [who, setWho] = useState('')
+  const [context, setContext] = useState('')
 
-  const sorted = [...rows].reverse()
-  const latest = sorted[0]
+  // Vaste volgorde (oudste eerst); elke week schuift hij er één op
+  const pool = [...rows].sort((a, b) => a.created_at.localeCompare(b.created_at))
+  const idx = pool.length ? (((weekIndex() + offset) % pool.length) + pool.length) % pool.length : 0
+  const current = pool[idx]
+  const nameOf = (q: Quote) => q.said_by_name || (q.said_by ? byId.get(q.said_by)?.name : null) || 'onbekend'
 
   async function add(e: FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    await insert('quotes', { text: text.trim().replace(/^["“”']+|["“”']+$/g, ''), said_by: who || null })
+    await insert('quotes', {
+      text: text.trim().replace(/^["“”'‘’]+|["“”'‘’]+$/g, ''),
+      said_by: null,
+      said_by_name: who.trim() || null,
+      context: context.trim() || null,
+    })
     setText('')
     setWho('')
+    setContext('')
     setAdding(false)
   }
 
@@ -165,47 +181,58 @@ function QuoteCard() {
       {adding && (
         <form className="form quote-form" onSubmit={add}>
           <input placeholder="Wat werd er gezegd?" value={text} onChange={(e) => setText(e.target.value)} autoFocus aria-label="Quote" />
-          <div className="add-bar">
-            <PersonSelect value={who} onChange={setWho} placeholder="Wie zei het?" label="Wie zei het" />
-            <button className="plus-btn" aria-label="Quote opslaan" disabled={!text.trim()}>
-              <PlusIcon />
-            </button>
+          <div className="field-row">
+            <input placeholder="Wie zei het?" value={who} onChange={(e) => setWho(e.target.value)} list="quote-names" aria-label="Wie zei het" />
+            <input placeholder="Context (optioneel)" value={context} onChange={(e) => setContext(e.target.value)} aria-label="Context" />
           </div>
+          <datalist id="quote-names">
+            {active.map((h) => (
+              <option key={h.id} value={h.name} />
+            ))}
+          </datalist>
+          <button className="btn primary" disabled={!text.trim()}>
+            <PlusIcon /> Quote toevoegen
+          </button>
         </form>
       )}
 
-      {latest ? (
+      {current ? (
         <figure className="quote">
-          <blockquote>{latest.text}</blockquote>
+          <blockquote>{current.text}</blockquote>
           <figcaption>
-            — {latest.said_by ? byId.get(latest.said_by)?.name ?? 'onbekend' : 'onbekend'}, {ago(latest.created_at)}
+            — {nameOf(current)}
+            {current.context && <span className="q-context">, {current.context}</span>}
           </figcaption>
         </figure>
       ) : (
         !adding && <Empty>Nog geen quote. Iemand zegt vast snel iets doms.</Empty>
       )}
 
-      {sorted.length > 1 && (
-        <>
+      {pool.length > 1 && (
+        <div className="quote-foot">
           <button className="link small" onClick={() => setShowAll((s) => !s)}>
-            {showAll ? '▾' : '▸'} Eerdere quotes ({sorted.length - 1})
+            {showAll ? '▾' : '▸'} Alle quotes ({pool.length})
           </button>
-          {showAll && (
-            <ul className="list">
-              {sorted.slice(1).map((q) => (
-                <li key={q.id} className="row">
-                  <div className="row-main">
-                    <strong className="q-old">“{q.text}”</strong>
-                    <span className="meta">
-                      {q.said_by ? byId.get(q.said_by)?.name : 'onbekend'} · {ago(q.created_at)}
-                    </span>
-                  </div>
-                  <ConfirmButton onConfirm={() => remove('quotes', q.id)}>×</ConfirmButton>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+          <button className="btn ghost small" onClick={() => setOffset((o) => o + 1)} aria-label="Andere quote">
+            ↻ Andere
+          </button>
+        </div>
+      )}
+      {showAll && (
+        <ul className="list">
+          {[...pool].reverse().map((q) => (
+            <li key={q.id} className="row">
+              <div className="row-main">
+                <strong className="q-old">“{q.text}”</strong>
+                <span className="meta">
+                  {nameOf(q)}
+                  {q.context ? `, ${q.context}` : ''} · {new Date(q.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
+                </span>
+              </div>
+              <ConfirmButton onConfirm={() => remove('quotes', q.id)}>×</ConfirmButton>
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   )

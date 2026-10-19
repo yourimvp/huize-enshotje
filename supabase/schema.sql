@@ -80,6 +80,8 @@ create table if not exists quotes (
   id          uuid primary key default gen_random_uuid(),
   text        text not null,
   said_by     uuid references housemates(id) on delete set null,
+  said_by_name text,          -- vrije naam, ook voor niet-huisgenoten
+  context     text,           -- bijv. "tegen Merel"
   created_at  timestamptz not null default now()
 );
 

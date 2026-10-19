@@ -94,7 +94,9 @@ const times: Tables['times'][] = [
 ]
 
 const quotes: Tables['quotes'][] = [
-  { id: 'q0', text: 'Ik drink vanavond echt maar twee biertjes.', said_by: hid(2), created_at: ago(20) },
+  { id: 'q0', text: 'Ik drink vanavond echt maar twee biertjes', said_by: null, said_by_name: 'Daan', context: null, created_at: ago(400) },
+  { id: 'q1', text: 'Gevangenis is ook maar een locatie', said_by: null, said_by_name: 'Bram', context: null, created_at: ago(300) },
+  { id: 'q2', text: 'Wat ben je toch zwaar', said_by: null, said_by_name: 'Joep', context: 'tegen Lotte', created_at: ago(200) },
 ]
 
 export const demoSeed: { [K in TableName]?: Tables[K][] } = {
