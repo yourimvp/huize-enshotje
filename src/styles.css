@@ -26,9 +26,9 @@
 
   --wire: #2e4a3b;
   --brass: #c99a2e;
-  --gold: #e3b341;
-  --silver: #b9bcc2;
-  --bronze: #c07b45;
+  --gold: #d9a520;
+  --silver: #a9adb5;
+  --bronze: #b8703a;
   --cow: #e98bb7;
   --pos: #1f8a4c;
   --neg: #d33743;
@@ -150,10 +150,9 @@ a {
   font-style: italic;
   color: var(--g-magenta);
 }
-.hero h1 em {
-  color: var(--g-yellow);
-}
-.door {
+
+.door,
+.bovenlicht {
   flex: none;
   display: block;
 }
@@ -1242,29 +1241,57 @@ table {
   z-index: 1;
 }
 .block {
+  position: relative;
   width: 100%;
-  background: linear-gradient(to bottom, var(--card-2), var(--card));
-  border: 1px solid var(--line);
-  border-top: 3px solid var(--medal);
   border-radius: 10px 10px 4px 4px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   padding-top: 20px;
+  overflow: hidden;
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -10px 18px rgba(0, 0, 0, 0.12);
+}
+/* Metaalglans */
+.block::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.45) 45%, transparent 60%);
+  pointer-events: none;
 }
 .block span {
+  position: relative;
   font-family: var(--display);
-  font-size: 30px;
-  color: var(--medal);
+  font-size: 32px;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.block small {
+  position: relative;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.9;
 }
 .step-1 .block {
-  height: 112px;
-  box-shadow: 0 -10px 30px -18px var(--gold);
+  height: 126px;
+  background: linear-gradient(160deg, #f6d46a, var(--gold) 55%, #a87810);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 30px -14px var(--gold);
 }
 .step-2 .block {
-  height: 84px;
+  background: linear-gradient(160deg, #e3e6ea, var(--silver) 55%, #7d828b);
 }
 .step-3 .block {
-  height: 62px;
+  background: linear-gradient(160deg, #e2a273, var(--bronze) 55%, #7f4720);
+}
+.step-2 .block {
+  height: 100px;
+}
+.step-3 .block {
+  height: 80px;
 }
 .empty-step .block {
   opacity: 0.4;
@@ -1344,12 +1371,9 @@ table {
   border-radius: var(--radius);
   overflow: hidden;
   background:
-    radial-gradient(ellipse 60% 90% at 85% 100%, rgba(242, 181, 31, 0.14), transparent 70%),
-    var(--night);
-  color: #f0e6d1;
-}
-.hero .muted {
-  color: #a99e88;
+    radial-gradient(ellipse 55% 85% at 85% 100%, rgba(242, 181, 31, 0.16), transparent 70%),
+    var(--card);
+  border: 1px solid var(--line);
 }
 .hero .glass-strip {
   grid-column: 1 / -1;
@@ -1373,7 +1397,7 @@ table {
   height: auto;
   display: block;
   margin: 14px 12px -2px 0;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 6px 10px rgba(26, 22, 18, 0.18));
 }
 
 .zuip {

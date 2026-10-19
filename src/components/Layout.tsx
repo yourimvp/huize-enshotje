@@ -1,6 +1,6 @@
 import { NavLink, Outlet, Link } from 'react-router-dom'
 import { DEMO } from '../lib/db'
-import { Door, Lights } from './decor'
+import { Bovenlicht, Lights } from './decor'
 
 export const NAV = [
   { to: '/', label: 'Thuis', color: 'var(--g-yellow)', end: true },
@@ -16,7 +16,7 @@ export default function Layout() {
       <Lights />
       <header className="topbar">
         <Link to="/" className="logo">
-          <Door size={20} />
+          <Bovenlicht size={30} />
           <span>
             Huize <em>Enshotje</em>
           </span>

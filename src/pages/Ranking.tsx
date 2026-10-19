@@ -53,7 +53,7 @@ function useBest(times: TimeEntry[]) {
   }, [times, byId])
 }
 
-const MEDAL = ['var(--gold)', 'var(--silver)', 'var(--bronze)']
+const MEDAL = ['Goud', 'Zilver', 'Brons']
 
 function Board({ times }: { times: TimeEntry[] }) {
   const ranked = useBest(times)
@@ -80,8 +80,9 @@ function Board({ times }: { times: TimeEntry[] }) {
                 </Viltje>
               </div>
             )}
-            <div className="block" style={{ ['--medal' as string]: MEDAL[place[i] - 1] }}>
+            <div className="block">
               <span>{place[i]}</span>
+              <small>{MEDAL[place[i] - 1]}</small>
             </div>
           </div>
         ))}

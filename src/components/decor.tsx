@@ -82,6 +82,27 @@ export function Door({ size = 160 }: { size?: number }) {
   )
 }
 
+/** Logo: het glas-in-lood bovenlicht van de voordeur. */
+export function Bovenlicht({ size = 30 }: { size?: number }) {
+  const panes: ReactNode[] = []
+  const cols = 5
+  const rows = 4
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++)
+      panes.push(<rect key={`${r}${c}`} x={4.5 + c * 4.8} y={3 + r * 4.8} width={4} height={4} fill={C[(c * 2 + r * 3) % 6]} />)
+  return (
+    <svg width={size} height={size * (26 / 32)} viewBox="0 0 32 26" aria-hidden className="bovenlicht">
+      <defs>
+        <clipPath id="bl-clip">
+          <path d="M4.5 23.5 V14 A11.5 10.5 0 0 1 27.5 14 V23.5 Z" />
+        </clipPath>
+      </defs>
+      <path d="M2 26 V14 A14 13 0 0 1 30 14 V26 Z" fill="#1a1612" />
+      <g clipPath="url(#bl-clip)">{panes}</g>
+    </svg>
+  )
+}
+
 /** Bedrukt bierviltje. */
 export function Viltje({ ring = 'var(--g-red)', size = 96, children }: { ring?: string; size?: number; children: ReactNode }) {
   return (
