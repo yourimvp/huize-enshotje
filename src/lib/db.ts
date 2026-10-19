@@ -19,7 +19,7 @@ type Row<T extends TableName> = Tables[T]
 
 // ── Demo-opslag ─────────────────────────────────────────────────────────────
 const listeners = new Map<TableName, Set<() => void>>()
-const storeKey = (t: TableName) => `enshotje-demo3:${t}`
+const storeKey = (t: TableName) => `enshotje-demo4:${t}`
 
 function demoRead<T extends TableName>(table: T): Row<T>[] {
   try {
@@ -75,6 +75,22 @@ export async function insert<T extends TableName>(
   const { data, error } = await supabase!.from(table).insert(row as never).select().single()
   if (error) throw error
   return data as Row<T>
+}
+
+/** Achievement vastleggen; doet niks als die persoon hem al had. */
+export async function unlockAchievement(housemateId: string, key: string): Promise<boolean> {
+  if (DEMO) {
+    const rows = demoRead('achievement_unlocks')
+    if (rows.some((r) => r.housemate_id === housemateId && r.key === key)) return false
+    await insert('achievement_unlocks', { housemate_id: housemateId, key })
+    return true
+  }
+  const { data, error } = await supabase!
+    .from('achievement_unlocks')
+    .upsert({ housemate_id: housemateId, key } as never, { onConflict: 'housemate_id,key', ignoreDuplicates: true })
+    .select()
+  if (error) throw error
+  return (data?.length ?? 0) > 0
 }
 
 export async function update<T extends TableName>(table: T, id: string, patch: Partial<Row<T>>) {

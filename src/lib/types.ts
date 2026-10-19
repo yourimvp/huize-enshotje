@@ -14,6 +14,8 @@ export interface ShoppingItem extends Base {
   note: string | null
   checked: boolean
   checked_at: string | null
+  checked_by: string | null
+  cleared: boolean
 }
 
 export interface DrinkType extends Base {
@@ -59,6 +61,23 @@ export interface Quote extends Base {
   context: string | null
 }
 
+export interface AgendaEvent extends Base {
+  title: string
+  date: string // YYYY-MM-DD
+  time: string | null
+  note: string | null
+}
+
+export interface GameResult extends Base {
+  game: string
+  winner_id: string
+}
+
+export interface AchievementUnlock extends Base {
+  housemate_id: string
+  key: string
+}
+
 export interface Tables {
   housemates: Housemate
   shopping_items: ShoppingItem
@@ -69,6 +88,9 @@ export interface Tables {
   disciplines: Discipline
   times: TimeEntry
   quotes: Quote
+  events: AgendaEvent
+  game_results: GameResult
+  achievement_unlocks: AchievementUnlock
 }
 
 export type TableName = keyof Tables

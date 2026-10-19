@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { remove } from '../lib/db'
+import { update } from '../lib/db'
 import { useTable } from '../lib/hooks'
 import { PageTitle } from '../components/decor'
 import { ConfirmButton } from '../components/ui'
@@ -9,9 +9,9 @@ export default function Boodschappen() {
   const { rows } = useTable('shopping_items')
   const [showDone, setShowDone] = useState(false)
 
-  const open = useMemo(() => rows.filter((r) => !r.checked), [rows])
+  const open = useMemo(() => rows.filter((r) => !r.checked && !r.cleared), [rows])
   const done = useMemo(
-    () => rows.filter((r) => r.checked).sort((a, b) => (b.checked_at ?? '').localeCompare(a.checked_at ?? '')),
+    () => rows.filter((r) => r.checked && !r.cleared).sort((a, b) => (b.checked_at ?? '').localeCompare(a.checked_at ?? '')),
     [rows],
   )
 
@@ -32,7 +32,7 @@ export default function Boodschappen() {
             <button className="link" onClick={() => setShowDone((s) => !s)}>
               {showDone ? '▾' : '▸'} Gehaald ({done.length})
             </button>
-            <ConfirmButton onConfirm={() => remove('shopping_items', done.map((d) => d.id))} confirmLabel="Ja, opruimen">
+            <ConfirmButton onConfirm={() => Promise.all(done.map((d) => update('shopping_items', d.id, { cleared: true })))} confirmLabel="Ja, opruimen">
               Opruimen
             </ConfirmButton>
           </div>

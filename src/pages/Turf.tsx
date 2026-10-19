@@ -4,6 +4,7 @@ import { useTable } from '../lib/hooks'
 import { useHouse } from '../lib/house'
 import { ago, euro, inMonth, monthLabel, monthStart, parseEuro } from '../lib/format'
 import { purchaseComplete, purchasePresets, settleMonth } from '../lib/turf'
+import { currentStreak, dayKey } from '../lib/days'
 import { Avatar, PageTitle, TallyMarks } from '../components/decor'
 import { ConfirmButton, Empty, PersonSelect, PlusIcon, Tabs, useToast } from '../components/ui'
 import type { DrinkPurchase, DrinkTally, DrinkType } from '../lib/types'
@@ -58,6 +59,16 @@ function Strepen({ types, tallies }: { types: DrinkType[]; tallies: DrinkTally[]
     return m
   }, [tallies, month, type?.id])
 
+  const streaks = useMemo(() => {
+    const days = new Map<string, Set<string>>()
+    for (const t of tallies) {
+      const s = days.get(t.housemate_id) ?? new Set<string>()
+      s.add(dayKey(t.created_at))
+      days.set(t.housemate_id, s)
+    }
+    return new Map([...days].map(([id, s]) => [id, currentStreak(s)]))
+  }, [tallies])
+
   const recent = useMemo(() => [...tallies].reverse().slice(0, 15), [tallies])
   const typeName = (id: string | null) => types.find((x) => x.id === id)?.name ?? 'drankje'
 
@@ -90,7 +101,14 @@ function Strepen({ types, tallies }: { types: DrinkType[]; tallies: DrinkTally[]
           return (
             <button key={h.id} className="tally-tile" onClick={() => streep(h.id)} style={{ ['--c' as string]: h.color }}>
               <span className="tt-head">
-                <span className="tt-name">{h.name}</span>
+                <span className="tt-name">
+                  {h.name}
+                  {(streaks.get(h.id) ?? 0) >= 2 && (
+                    <span className="flame" title={`${streaks.get(h.id)} dagen achter elkaar`}>
+                      🔥{streaks.get(h.id)}
+                    </span>
+                  )}
+                </span>
                 <span className="tt-count">{n}</span>
               </span>
               <TallyMarks n={n} max={30} />

@@ -9,11 +9,15 @@ import { GlassStrip } from '../components/decor'
 import { ConfirmButton, Empty, PlusIcon } from '../components/ui'
 import { AddItem, OpenItems } from '../components/Shopping'
 import type { Quote } from '../lib/types'
+import { localDate } from '../lib/days'
+import { EventRow, sortEvents } from './Agenda'
 
 export default function Home() {
   const { active } = useHouse()
   const shopping = useTable('shopping_items').rows
   const openItems = shopping.filter((s) => !s.checked)
+  const events = useTable('events').rows
+  const todayEvents = sortEvents(events.filter((e) => e.date === localDate(new Date())))
 
   return (
     <div className="page home">
@@ -27,6 +31,19 @@ export default function Home() {
         <img src={`${import.meta.env.BASE_URL}huis.webp`} alt="De huisgenoten van Huize Enshotje" className="hero-img" />
         <GlassStrip cells={90} size={11} />
       </section>
+
+      {todayEvents.length > 0 && (
+        <Link to="/agenda" className="card today-card">
+          <h2 className="card-title">
+            <span className="dot" style={{ background: 'var(--g-red)', color: 'var(--g-red)' }} /> Vandaag in huis
+          </h2>
+          <ul className="list">
+            {todayEvents.map((ev) => (
+              <EventRow key={ev.id} ev={ev} compact />
+            ))}
+          </ul>
+        </Link>
+      )}
 
       <div className="home-grid">
         <section className="card">

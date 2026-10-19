@@ -43,11 +43,11 @@ counts.forEach((c, i) => {
 })
 
 const shopping_items: Tables['shopping_items'][] = [
-  { id: 's0', name: 'Wc-papier', note: 'de grote pak', checked: false, checked_at: null, created_at: ago(30) },
-  { id: 's1', name: 'Afwasmiddel', note: null, checked: false, checked_at: null, created_at: ago(20) },
-  { id: 's2', name: 'Pindakaas', note: 'met stukjes', checked: false, checked_at: null, created_at: ago(8) },
-  { id: 's3', name: 'Vuilniszakken', note: null, checked: false, checked_at: null, created_at: ago(3) },
-  { id: 's4', name: 'Melk', note: null, checked: true, checked_at: ago(2), created_at: ago(40) },
+  { id: 's0', name: 'Wc-papier', note: 'de grote pak', checked: false, checked_at: null, checked_by: null, cleared: false, created_at: ago(30) },
+  { id: 's1', name: 'Afwasmiddel', note: null, checked: false, checked_at: null, checked_by: null, cleared: false, created_at: ago(20) },
+  { id: 's2', name: 'Pindakaas', note: 'met stukjes', checked: false, checked_at: null, checked_by: null, cleared: false, created_at: ago(8) },
+  { id: 's3', name: 'Vuilniszakken', note: null, checked: false, checked_at: null, checked_by: null, cleared: false, created_at: ago(3) },
+  { id: 's4', name: 'Melk', note: null, checked: true, checked_at: ago(2), checked_by: hid(3), cleared: false, created_at: ago(40) },
 ]
 
 const any = (id: string, to: number, by: number, reason: string, h: number, redeemed = false) => ({
@@ -99,6 +99,25 @@ const quotes: Tables['quotes'][] = [
   { id: 'q2', text: 'Wat ben je toch zwaar', said_by: null, said_by_name: 'Joep', context: 'tegen Lotte', created_at: ago(200) },
 ]
 
+const today = new Date()
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const plus = (n: number) => iso(new Date(today.getFullYear(), today.getMonth(), today.getDate() + n))
+const events: Tables['events'][] = [
+  { id: 'e0', title: 'Huisavond: pannenkoeken', date: plus(0), time: '19:00', note: 'Bram kookt', created_at: ago(30) },
+  { id: 'e1', title: 'Schoonmaakdag', date: plus(3), time: null, note: null, created_at: ago(20) },
+  { id: 'e2', title: 'Borrel bij Asset', date: plus(5), time: '21:30', note: null, created_at: ago(10) },
+]
+
+const game = (id: string, g: string, w: number, h: number) => ({ id, game: g, winner_id: hid(w), created_at: ago(h) })
+const game_results: Tables['game_results'][] = [
+  game('g0', 'Kingsen', 2, 200),
+  game('g1', 'Paardenrace', 2, 150),
+  game('g2', 'Mexen', 4, 100),
+  game('g3', 'Beerpong', 0, 50),
+  game('g4', 'Paardenrace', 0, 30),
+  game('g5', 'Kingsen', 0, 5),
+]
+
 export const demoSeed: { [K in TableName]?: Tables[K][] } = {
   housemates,
   drink_types,
@@ -109,4 +128,6 @@ export const demoSeed: { [K in TableName]?: Tables[K][] } = {
   disciplines,
   times,
   quotes,
+  events,
+  game_results,
 }

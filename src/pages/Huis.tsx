@@ -3,10 +3,12 @@ import { DEMO, insert, remove, update } from '../lib/db'
 import { useTable } from '../lib/hooks'
 import { GLASS, useHouse } from '../lib/house'
 import { Avatar, PageTitle } from '../components/decor'
-import { ConfirmButton, PlusIcon } from '../components/ui'
+import { ConfirmButton, PlusIcon, PersonPicker } from '../components/ui'
+import { useMe } from '../lib/me'
 
 export default function Huis() {
   const { housemates } = useHouse()
+  const { meId, setMe } = useMe()
   const drinkTypes = useTable('drink_types').rows
   const disciplines = useTable('disciplines').rows
 
@@ -40,6 +42,12 @@ export default function Huis() {
       <PageTitle color="var(--g-yellow)" sub="Instellingen voor het hele huis">
         Huis
       </PageTitle>
+
+      <section className="card">
+        <h2 className="card-title">Deze telefoon is van</h2>
+        <PersonPicker value={meId} onChange={setMe} label="Deze telefoon is van" />
+        <p className="hint">Geen account, alleen zodat afgestreepte boodschappen meetellen voor de prijzenkast.</p>
+      </section>
 
       <section className="card">
         <h2 className="card-title">Huisgenoten</h2>

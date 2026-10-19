@@ -2,6 +2,8 @@ import { useRef, useState, type FormEvent } from 'react'
 import { insert, remove, update } from '../lib/db'
 import { ago } from '../lib/format'
 import type { ShoppingItem } from '../lib/types'
+import { useMe } from '../lib/me'
+import { useHouse } from '../lib/house'
 import { ConfirmButton, Empty, PlusIcon } from './ui'
 
 export function AddItem({ autoFocus = false }: { autoFocus?: boolean }) {
@@ -35,26 +37,35 @@ export function AddItem({ autoFocus = false }: { autoFocus?: boolean }) {
   )
 }
 
-export function toggleItem(item: ShoppingItem) {
+export async function toggleItem(item: ShoppingItem, by: string | null) {
   return update('shopping_items', item.id, {
     checked: !item.checked,
     checked_at: item.checked ? null : new Date().toISOString(),
+    checked_by: item.checked ? null : by,
   })
 }
 
 export function ItemRow({ item, showDelete = true }: { item: ShoppingItem; showDelete?: boolean }) {
+  const { requireMe } = useMe()
+  const { byId } = useHouse()
+  const onToggle = async () => {
+    if (item.checked) return toggleItem(item, null)
+    const me = await requireMe()
+    return toggleItem(item, me)
+  }
+  const by = item.checked_by ? byId.get(item.checked_by)?.name : null
   return (
     <li className={`row item ${item.checked ? 'is-done' : ''}`}>
       <button
         className={`check ${item.checked ? 'on' : ''}`}
         aria-label={item.checked ? `${item.name} terugzetten` : `${item.name} afvinken`}
-        onClick={() => toggleItem(item)}
+        onClick={onToggle}
       />
       <div className="row-main">
         <strong>{item.name}</strong>
         {showDelete && (
           <span className="meta">
-            {item.checked && item.checked_at ? `gehaald ${ago(item.checked_at)}` : `erop gezet ${ago(item.created_at)}`}
+            {item.checked && item.checked_at ? `gehaald${by ? ` door ${by}` : ''} ${ago(item.checked_at)}` : `erop gezet ${ago(item.created_at)}`}
           </span>
         )}
       </div>
