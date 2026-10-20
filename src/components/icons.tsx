@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
  * Bedoeld op een gekleurd lapje (zie <Lapje>), maar werken ook los.
  */
 export type IconName =
+  | 'titanic'
   | 'paard'
   | 'rad'
   | 'duel'
@@ -28,6 +29,7 @@ const SHADE = 'rgba(26,22,18,.55)'
 const stitch = { fill: 'none', stroke: SHADE, strokeWidth: 1, strokeDasharray: '2 1.6', strokeLinecap: 'round' as const }
 
 const ICONS: Record<IconName, ReactNode> = {
+  titanic: (<><path d="M8 10 L12 39 Q24 44 36 39 L40 10" fill={INK} /><path d="M11 20 Q24 16 37 20 M12 38 Q24 42 36 38" {...stitch} /><path d="M19 14 L21 28 Q24 30 27 28 L29 14Z" fill={SHADE} /><path d="M20 23 H28" {...stitch} /></>),
   paard: (
     <>
       <path d="M14 40 C14 30 17 22 22 17 L20 9 L26 14 C30 11 36 12 39 17 L41 23 C42 26 39 28 37 26 L33 23 C31 27 32 33 34 40 Z" fill={INK} />

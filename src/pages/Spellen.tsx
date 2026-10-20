@@ -9,6 +9,7 @@ import { Lapje } from '../components/game'
 import { ConfirmButton, Empty, PersonPicker, PlusIcon } from '../components/ui'
 
 const GAMES = [
+  { to: '/spellen/titanic', icon: 'titanic' as const, title: 'Titaniccen', desc: 'Houd vast om te schenken. Wie het glaasje laat zinken, verliest.', color: '#348b9a' },
   { to: '/spellen/mines', icon: 'mines' as const, title: 'Mines', desc: 'Kies een vakje. Veilig? Deel uit, steeds meer. Bom? Drinken.', color: '#db3b47' },
   { to: '/spellen/paardenrace', icon: 'paard' as const, title: 'Paardenrace', desc: 'Kies een aas, zet slokken in en kijk welk paard wint.', color: '#2fa463' },
   { to: '/spellen/rad', icon: 'rad' as const, title: 'Radjes', desc: 'Je eigen radjes: strafrad, wat eten we, wie haalt bier.', color: '#e0468f' },

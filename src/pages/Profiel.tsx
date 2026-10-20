@@ -9,6 +9,7 @@ import { currentStreak, dayKey } from '../lib/days'
 import { formatMs, inMonth, monthStart } from '../lib/format'
 import { Avatar, GlassStrip } from '../components/decor'
 import { Medal } from '../components/Achievements'
+import { ProfilePhoto } from '../components/ProfilePhoto'
 import { Empty } from '../components/ui'
 
 export default function Profiel() {
@@ -66,6 +67,7 @@ export default function Profiel() {
             )}
             {extra.streak >= 2 && <span className="flame"> 🔥 {extra.streak} dagen op rij</span>}
           </p>
+          {h.id === meId && <ProfilePhoto id={h.id} hasPhoto={!!h.avatar_url} />}
         </div>
         <GlassStrip cells={60} size={9} />
       </section>

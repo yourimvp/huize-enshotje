@@ -2461,10 +2461,11 @@ input[type='time'] {
 }
 .who {
   position: relative;
+  padding-top: 23px;
 }
 .new-tag {
   position: absolute;
-  top: 6px;
+  top: 4px;
   right: 6px;
   font-size: 10px;
   font-weight: 700;
@@ -3583,12 +3584,10 @@ input[type='time'] {
 .logo-door {
   display: block;
   flex: none;
-  border-radius: 9px;
-  box-shadow: 0 1px 3px rgba(26, 22, 18, 0.2);
+  object-fit: contain;
 }
 .entry-card .logo-door {
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(26, 22, 18, 0.18);
+  filter: drop-shadow(0 3px 3px rgba(26, 22, 18, 0.12));
 }
 .me-link {
   margin-left: auto;
@@ -3707,3 +3706,26 @@ input[type='time'] {
   touch-action: pan-y;
   overflow-x: hidden;
 }
+
+/* Foto's blijven dezelfde ronde plek innemen als de initialen. */
+.avatar { overflow: hidden; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-photo-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.profile-photo-controls .error { flex-basis: 100%; }
+.titanic { display: flex; flex-direction: column; align-items: center; padding: 26px 18px; color: var(--text); }
+.titanic-status { text-align: center; min-height: 78px; }
+.titanic-status h2 { font: 30px var(--display); margin-bottom: 6px; }
+.titanic-status p { color: var(--muted); max-width: 32ch; font-size: 14px; }
+.titanic-scene { width: min(100%, 360px); display: block; overflow: visible; }
+.titanic-pour { touch-action: none; user-select: none; -webkit-touch-callout: none; min-height: 58px; width: min(100%, 320px); justify-content: center; }
+.titanic-shot { transform: rotate(var(--tilt)); transition: transform .3s ease; }
+.titanic-stream, .titanic-bubbles { opacity: 0; }
+.is-pouring .titanic-stream { opacity: 1; }
+.is-pouring .titanic-ripple { animation: titanic-ripple 1.3s ease-out infinite; transform-origin: 180px 150px; }
+.is-sunk .titanic-shot { animation: titanic-sink 1.3s ease-in forwards; }
+.is-sunk .titanic-bubbles { animation: titanic-bubbles 1.6s ease-out forwards; }
+@keyframes titanic-ripple { from { transform: scaleX(.7); opacity: .8; } to { transform: scaleX(1.4); opacity: 0; } }
+@keyframes titanic-sink { to { transform: translate(8px, 80px) rotate(32deg); opacity: .62; } }
+@keyframes titanic-bubbles { 0% { opacity: 0; transform: translateY(60px); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-65px); } }
+@media (max-width: 480px) { .titanic-scene { max-height: 340px; } .titanic { padding: 20px 12px; } }
+@media (prefers-reduced-motion: reduce) { .titanic * { animation: none !important; transition: none !important; } .is-sunk .titanic-shot { transform: translate(8px, 80px) rotate(32deg); opacity: .62; } }

@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="5 6 90 90">
 <defs><pattern id="s" width="2" height="2" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1=".5" x2="2" y2=".5" stroke="#fff" stroke-opacity=".28" stroke-width=".6"/></pattern>
 <clipPath id="arch"><path d="M27 37 V36 Q27 19 50 17 Q73 19 73 36 V37 Z"/></clipPath>
-<radialGradient id="bg" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#e2e0dc"/><stop offset="1" stop-color="#c9c6c0"/></radialGradient></defs>
-<rect width="100" height="100" rx="22" fill="url(#bg)"/>
+</defs>
+
 <path d="M21 93 V37 Q21 11 50 9 Q79 11 79 37 V93 Z" fill="#1a1612"/>
 <path d="M23.5 91 V37.5 Q23.5 14 50 12 Q76.5 14 76.5 37.5 V91 Z" fill="#f3ead6"/>
 <path d="M23.5 91 V37.5 Q23.5 14 50 12 Q76.5 14 76.5 37.5 V91 Z" fill="none" stroke="#b9a983" stroke-width=".6" stroke-dasharray="1.4 1"/>

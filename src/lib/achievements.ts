@@ -257,3 +257,25 @@ export const TIER_COLOR: Record<Tier, string> = {
 
 /** Alle tabellen die nodig zijn om achievements uit te rekenen. */
 export const STAT_TABLES = ['drink_tallies', 'drink_types', 'game_results', 'game_events', 'shopping_items', 'anytimers', 'quotes'] as const
+
+/** Een reset begint een nieuwe telperiode; de profielstatistieken blijven historisch. */
+export function computeAchievementStats(input: StatsInput): Map<string, PersonStats> {
+  const result = new Map<string, PersonStats>()
+  const periods = new Map<string, Map<string, PersonStats>>()
+  for (const person of input.housemates) {
+    const since = person.achievements_since ?? ''
+    let stats = periods.get(since)
+    if (!stats) {
+      const recent = <T extends { created_at: string }>(rows: T[]) => rows.filter((r) => r.created_at >= since)
+      stats = computeStats({
+        ...input,
+        tallies: recent(input.tallies), games: recent(input.games), events: recent(input.events), quotes: recent(input.quotes),
+        shopping: input.shopping.filter((r) => (r.checked_at ?? r.created_at) >= since),
+        anys: input.anys.filter((r) => (r.redeemed_at ?? r.created_at) >= since),
+      })
+      periods.set(since, stats)
+    }
+    result.set(person.id, stats.get(person.id)!)
+  }
+  return result
+}

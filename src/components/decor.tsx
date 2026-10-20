@@ -1,5 +1,5 @@
-import type { CSSProperties, ReactNode } from 'react'
-import { GLASS } from '../lib/house'
+import { useState, type CSSProperties, type ReactNode } from 'react'
+import { GLASS, useHouse } from '../lib/house'
 
 const C = GLASS.map((g) => g.hex)
 
@@ -126,9 +126,12 @@ export function CowBlob({ size = 48, style }: { size?: number; style?: CSSProper
 }
 
 export function Avatar({ name, color, size = 28 }: { name: string; color: string; size?: number }) {
+  const { housemates } = useHouse()
+  const photo = housemates.find((h) => h.name === name && h.color === color)?.avatar_url
+  const [failed, setFailed] = useState<string | null>(null)
   return (
     <span className="avatar" style={{ background: color, width: size, height: size, fontSize: size * 0.46 }} aria-hidden>
-      {name.slice(0, 1).toUpperCase()}
+      {photo && failed !== photo ? <img src={photo} alt="" onError={() => setFailed(photo)} /> : name.slice(0, 1).toUpperCase()}
     </span>
   )
 }

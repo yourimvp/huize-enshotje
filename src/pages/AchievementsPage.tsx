@@ -12,7 +12,7 @@ export default function AchievementsPage() {
   const { active, byId } = useHouse()
   const { meId } = useMe()
   const unlocks = useTable('achievement_unlocks').rows
-  const { stats } = useStats()
+  const { achievementStats: stats } = useStats()
   const [who, setWho] = useState<string | null>(meId)
 
   const holders = useMemo(() => {

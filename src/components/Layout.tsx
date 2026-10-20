@@ -99,7 +99,7 @@ export default function Layout() {
       <Lights />
       <header className="topbar">
         <Link to="/" className="logo">
-          <img src={`${import.meta.env.BASE_URL}icon.svg`} width={34} height={34} alt="" className="logo-door" />
+          <img src={`${import.meta.env.BASE_URL}icon.svg`} width={44} height={44} alt="" className="logo-door" />
           <span>
             Huize <em>Enshotje</em>
           </span>

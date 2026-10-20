@@ -9,6 +9,8 @@ export interface Housemate extends Base {
   active: boolean
   user_id?: string | null
   pin_version?: number
+  avatar_url?: string | null
+  achievements_since?: string | null
   is_admin?: boolean
 }
 
@@ -78,6 +80,7 @@ export interface GameResult extends Base {
 }
 
 export interface AchievementUnlock extends Base {
+  epoch?: string | null
   housemate_id: string
   key: string
 }

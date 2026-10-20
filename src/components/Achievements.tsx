@@ -53,25 +53,26 @@ export function fireConfetti() {
  */
 export function AchievementWatcher() {
   const { housemates, byId } = useHouse()
-  const { stats } = useStats()
+  const { achievementStats: stats, pending } = useStats()
   const unlocks = useTable('achievement_unlocks')
   const attempted = useRef(new Set<string>())
   const [queue, setQueue] = useState<AchievementUnlock[]>([])
 
   // 1. Nieuwe prestaties vastleggen
   useEffect(() => {
-    if (unlocks.loading || housemates.length === 0) return
+    if (pending || unlocks.loading || housemates.length === 0) return
     const have = new Set(unlocks.rows.map((u) => `${u.housemate_id}|${u.key}`))
     for (const [id, s] of stats) {
       for (const a of ACHIEVEMENTS) {
-        const k = `${id}|${a.key}`
-        if (a.value(s) >= a.target && !have.has(k) && !attempted.current.has(k)) {
+        const epoch = byId.get(id)?.achievements_since ?? null
+        const k = `${id}|${a.key}|${epoch ?? ''}`
+        if (a.value(s) >= a.target && !have.has(`${id}|${a.key}`) && !attempted.current.has(k)) {
           attempted.current.add(k)
-          unlockAchievement(id, a.key).catch(() => attempted.current.delete(k))
+          unlockAchievement(id, a.key, epoch).catch(() => attempted.current.delete(k))
         }
       }
     }
-  }, [stats, unlocks.rows, unlocks.loading, housemates.length])
+  }, [stats, pending, unlocks.rows, unlocks.loading, housemates.length, byId])
 
   // 2. Nieuwe unlocks tonen (ook als iemand anders ze haalde)
   useEffect(() => {

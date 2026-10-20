@@ -21,6 +21,7 @@ import Rad from './games/Rad'
 import Duel from './games/Duel'
 import Dobbelstenen from './games/Dobbelstenen'
 import Mines from './games/Mines'
+import Titanic from './games/Titanic'
 
 export default function App() {
   return (
@@ -55,6 +56,7 @@ function Gate() {
           <Route path="spellen/rad" element={<Rad />} />
           <Route path="spellen/duel" element={<Duel />} />
           <Route path="spellen/dobbelstenen" element={<Dobbelstenen />} />
+          <Route path="spellen/titanic" element={<Titanic />} />
           <Route path="spellen/mines" element={<Mines />} />
           <Route path="ranking" element={<Ranking />} />
           <Route path="anys" element={<Anys />} />

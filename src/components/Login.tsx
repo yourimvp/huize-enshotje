@@ -69,7 +69,7 @@ export default function Login() {
     <div className="entry">
       <Lights />
       <div className="entry-card card">
-        <img src={`${import.meta.env.BASE_URL}icon.svg`} width={64} height={64} alt="" className="logo-door" />
+        <img src={`${import.meta.env.BASE_URL}icon.svg`} width={76} height={76} alt="" className="logo-door" />
         <h1 className="entry-title">
           Huize <em>Enshotje</em>
         </h1>
