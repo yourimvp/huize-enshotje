@@ -9,14 +9,15 @@ import { Lapje } from '../components/game'
 import { ConfirmButton, Empty, PersonPicker, PlusIcon } from '../components/ui'
 
 const GAMES = [
-  { to: '/spellen/titanic', icon: 'titanic' as const, title: 'Titaniccen', desc: 'Houd vast om te schenken. Wie het glaasje laat zinken, verliest.', color: '#348b9a' },
-  { to: '/spellen/mines', icon: 'mines' as const, title: 'Mines', desc: 'Kies een vakje. Veilig? Deel uit, steeds meer. Bom? Drinken.', color: '#db3b47' },
+  { to: '/spellen/rad', icon: 'rad' as const, title: 'Radtje', desc: 'Je eigen radjes: strafrad, wat eten we, wie haalt bier.', color: '#e0468f' },
   { to: '/spellen/paardenrace', icon: 'paard' as const, title: 'Paardenrace', desc: 'Kies een aas, zet slokken in en kijk welk paard wint.', color: '#2fa463' },
-  { to: '/spellen/rad', icon: 'rad' as const, title: 'Radjes', desc: 'Je eigen radjes: strafrad, wat eten we, wie haalt bier.', color: '#e0468f' },
-  { to: '/spellen/duel', icon: 'duel' as const, title: 'Cowboy-duel', desc: 'Wie trekt het snelst? Te vroeg is misfire.', color: '#ee7432' },
   { to: '/spellen/dobbelstenen', icon: 'dobbel' as const, title: 'Dobbelstenen', desc: 'Gooien, vastzetten, opnieuw. Met Mexen-stand.', color: '#3a7be0' },
-  { to: '/spellen/ei', icon: 'ei' as const, title: 'Crack the egg', desc: 'Tik om de beurt. Wie het ei breekt, drinkt.', color: '#f2b51f' },
   { to: '/spellen/chwazi', icon: 'chwazi' as const, title: 'Chwazi', desc: 'Iedereen een vinger op het scherm. Eén iemand wordt gekozen.', color: '#7a4bd1' },
+  { to: '/spellen/mines', icon: 'mines' as const, title: 'Mines', desc: 'Kies een vakje. Veilig? Deel uit, steeds meer. Bom? Drinken.', color: '#db3b47' },
+  { to: '/spellen/titanic', icon: 'titanic' as const, title: 'Titanic', desc: 'Houd vast om te schenken. Wie het glaasje laat zinken, verliest.', color: '#348b9a' },
+  { to: '/spellen/ei', icon: 'ei' as const, title: 'Crack the egg', desc: 'Tik om de beurt. Wie het ei breekt, drinkt.', color: '#f2b51f' },
+  { to: '/spellen/duel', icon: 'duel' as const, title: 'Duel', desc: 'Wie trekt het snelst? Te vroeg is misfire.', color: '#ee7432' },
+  { to: '/spellen/slots', icon: 'slots' as const, title: 'Slots', desc: 'Kies je lijnen, neem je inzet. Wat je wint, deel je uit.', color: '#30566f' },
 ]
 
 const KNOWN = ['Paardenrace', 'Duel', 'Mines', 'Kingsen', 'Bussen', 'Beerpong', 'Klaverjassen', 'Mario Kart', 'FIFA', 'Mexen', 'Pesten', 'Darten']

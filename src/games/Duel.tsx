@@ -40,7 +40,7 @@ export default function Duel() {
 
   if (!playing)
     return (
-      <GameShell icon="duel" title="Cowboy-duel" intro="Leg de telefoon plat tussen jullie in. Wacht op VUUR! en tik dan zo snel mogelijk op jouw kant. Te vroeg? Misfire, verloren.">
+      <GameShell icon="duel" title="Duel" intro="Leg de telefoon plat tussen jullie in. Wacht op VUUR! en tik dan zo snel mogelijk op jouw kant. Te vroeg? Misfire, verloren.">
         <section className="card">
           <h2 className="card-title">Kies twee cowboys</h2>
           <PlayerSelect value={players} onChange={setPlayers} max={2} />

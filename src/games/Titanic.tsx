@@ -59,7 +59,7 @@ export default function Titanic() {
     setFill(0); setSunk(false)
   }
   const depth = fill * 64
-  return <GameShell icon="titanic" title="Titaniccen" intro="Nog een druppeltje. Durf je?">
+  return <GameShell icon="titanic" title="Titanic" intro="Nog een druppeltje. Durf je?">
     <Kast className={`titanic ${pouring ? 'is-pouring' : ''} ${sunk ? 'is-sunk' : ''}`}>
       <div className="titanic-status" aria-live="polite"><h2>{sunk ? 'Kopje onder.' : pouring ? 'Voorzichtig…' : fill > 0 ? 'Hij drijft nog.' : 'Wie durft als eerste?'}</h2><p>{sunk ? 'Jij liet hem zinken.' : 'Houd vast om te schenken. Laat los en geef door.'}</p></div>
       <svg className="titanic-scene" viewBox="0 0 360 390" role="img" aria-label={sunk ? 'Het shotglaasje is gezonken' : 'Een shotglaasje drijft in een glas water'}>

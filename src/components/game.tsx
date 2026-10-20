@@ -112,6 +112,7 @@ export function Uitslag({ title, lines, children }: { title: ReactNode; lines: U
 }
 
 export const GAME_COLOR: Partial<Record<IconName, string>> = {
+  slots: '#30566f',
   titanic: '#348b9a',
   paard: '#2fa463',
   rad: '#e0468f',

@@ -42,7 +42,7 @@ export default function Rad() {
   if (wheel) return <Spinner wheel={wheel} onBack={() => setOpenId(null)} onEdit={() => setEditing(wheel)} />
 
   return (
-    <GameShell icon="rad" title="Radjes" intro="Maak je eigen radjes en draai ze zo vaak je wilt.">
+    <GameShell icon="rad" title="Radtje" intro="Maak je eigen radjes en draai ze zo vaak je wilt.">
       <div className="wheel-list">
         {wheels.map((w) => (
           <button key={w.id} className="card wheel-card" onClick={() => setOpenId(w.id)}>
