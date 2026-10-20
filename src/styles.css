@@ -3139,6 +3139,18 @@ input[type='time'] {
 }
 
 /* ── Dobbelstenen ────────────────────────────────────────── */
+.dice-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dice-toolbar .segmented {
+  flex: 1;
+}
+.mex-roll-limit {
+  width: 58px;
+  flex-shrink: 0;
+}
 .dice-kast {
   min-height: 260px;
   display: flex;
