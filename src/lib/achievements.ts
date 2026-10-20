@@ -23,6 +23,9 @@ export interface PersonStats {
   earlyDrinks: number
   lateDrinks: number
   monthWins: number
+  beer: number
+  beerMonthWins: number
+  bestBeerMonthStreak: number
   bozu: number
   shots: number
   wins: number
@@ -65,6 +68,12 @@ export const ACHIEVEMENTS: Achievement[] = [
   A('Streaks', 'streak-4', '☄️', 'Lang weekend', '4 dagen achter elkaar een drankje', 'zilver', 4, (s) => s.bestDrinkStreak),
   A('Streaks', 'streak-7', '🌋', 'Doordrinker', '7 dagen achter elkaar elke dag een drankje', 'goud', 7, (s) => s.bestDrinkStreak),
   // Turf
+  A('Turf', 'beer-25', '🍺', 'Drink 25 bier', 'Drink in totaal 25 bier', 'brons', 25, (s) => s.beer),
+  A('Turf', 'beer-50', '🍻', 'Drink 50 bier', 'Drink in totaal 50 bier', 'zilver', 50, (s) => s.beer),
+  A('Turf', 'beer-100', '🏆', 'Drink 100 bier', 'Drink in totaal 100 bier', 'goud', 100, (s) => s.beer),
+  A('Turf', 'beer-prince', '🤴', 'Prins pils', 'Drink het meeste bier in een afgeronde maand', 'brons', 1, (s) => s.beerMonthWins),
+  A('Turf', 'beer-king', '👑', 'Koning pils', 'Drink 2 afgeronde maanden op rij het meeste bier', 'zilver', 2, (s) => s.bestBeerMonthStreak),
+  A('Turf', 'beer-emperor', '⚜️', 'Keizer des pils', 'Sta 4 afgeronde maanden op rij op de biertroon', 'goud', 4, (s) => s.bestBeerMonthStreak),
   A('Turf', 'bozu-25', '🍶', 'Bozu-baas', 'Streep 25 Bozu', 'zilver', 25, (s) => s.bozu),
   A('Turf', 'shots-25', '🥃', 'Shotjeskoning', 'Streep 25 shotjes', 'zilver', 25, (s) => s.shots),
   A('Turf', 'month-champ', '🏅', 'Maandkampioen', 'Een hele maand de meeste streepjes van het huis', 'goud', 1, (s) => s.monthWins),
@@ -120,6 +129,9 @@ const empty = (): PersonStats => ({
   earlyDrinks: 0,
   lateDrinks: 0,
   monthWins: 0,
+  beer: 0,
+  beerMonthWins: 0,
+  bestBeerMonthStreak: 0,
   bozu: 0,
   shots: 0,
   wins: 0,
@@ -151,7 +163,57 @@ function winStreaks(games: GameResult[], into: Map<string, PersonStats>, field: 
   }
 }
 
-export function computeStats(input: StatsInput): Map<string, PersonStats> {
+const beerCalendar = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Amsterdam', year: 'numeric', month: 'numeric', day: 'numeric',
+  hour: 'numeric', minute: 'numeric', second: 'numeric', hourCycle: 'h23',
+})
+
+function beerMonth(date: Date) {
+  const parts = Object.fromEntries(beerCalendar.formatToParts(date).map((p) => [p.type, Number(p.value)]))
+  return { index: parts.year * 12 + parts.month - 1, parts }
+}
+
+/** Gedeelde winnaars tellen mee; lege maanden en een onderbreking breken de reeks. */
+function beerChampionships(input: StatsInput, now: Date, since = '') {
+  const result = new Map(input.housemates.map((h) => [h.id, { beerMonthWins: 0, bestBeerMonthStreak: 0 }]))
+  const beerTypes = new Set(input.types.filter((t) => t.name.trim().toLowerCase() === 'bier').map((t) => t.id))
+  const months = new Map<number, Map<string, number>>()
+  const currentMonth = beerMonth(now).index
+  let firstMonth = -Infinity
+  if (since) {
+    const date = new Date(since)
+    const { index, parts } = beerMonth(date)
+    const isMonthStart = parts.day === 1 && parts.hour === 0 && parts.minute === 0 && parts.second === 0 && date.getMilliseconds() === 0
+    firstMonth = index + (isMonthStart ? 0 : 1)
+  }
+  for (const t of input.tallies) {
+    if (!t.drink_type_id || !beerTypes.has(t.drink_type_id) || !result.has(t.housemate_id)) continue
+    const date = new Date(t.created_at)
+    if (!Number.isFinite(date.getTime())) continue
+    const month = beerMonth(date).index
+    if (month >= currentMonth || month < firstMonth) continue
+    const totals = months.get(month) ?? new Map<string, number>()
+    totals.set(t.housemate_id, (totals.get(t.housemate_id) ?? 0) + t.count)
+    months.set(month, totals)
+  }
+  const lastWin = new Map<string, { month: number; streak: number }>()
+  for (const [month, totals] of [...months].sort(([a], [b]) => a - b)) {
+    const best = Math.max(...totals.values())
+    if (best <= 0) continue
+    for (const [id, count] of totals) {
+      if (count !== best) continue
+      const previous = lastWin.get(id)
+      const streak = previous?.month === month - 1 ? previous.streak + 1 : 1
+      lastWin.set(id, { month, streak })
+      const stats = result.get(id)!
+      stats.beerMonthWins++
+      stats.bestBeerMonthStreak = Math.max(stats.bestBeerMonthStreak, streak)
+    }
+  }
+  return result
+}
+
+export function computeStats(input: StatsInput, now = new Date()): Map<string, PersonStats> {
   const { housemates, tallies, types, games, events, shopping, anys, quotes } = input
   const stats = new Map<string, PersonStats>()
   for (const h of housemates) stats.set(h.id, empty())
@@ -161,7 +223,7 @@ export function computeStats(input: StatsInput): Map<string, PersonStats> {
   const days = new Map<string, Set<string>>()
   const perNight = new Map<string, number>()
   const perMonth = new Map<string, Map<string, number>>()
-  const thisMonth = new Date().toISOString().slice(0, 7)
+  const thisMonth = now.toISOString().slice(0, 7)
   for (const t of tallies) {
     const s = stats.get(t.housemate_id)
     if (!s) continue
@@ -177,6 +239,7 @@ export function computeStats(input: StatsInput): Map<string, PersonStats> {
     if (hour >= 6 && hour < 12) s.earlyDrinks += t.count
     if (hour >= 3 && hour < 6) s.lateDrinks += t.count
     const name = (t.drink_type_id && typeName.get(t.drink_type_id)) || ''
+    if (name.trim() === 'bier' && d <= now) s.beer += t.count
     if (/bozu|boze/.test(name)) s.bozu += t.count
     if (/shot/.test(name)) s.shots += t.count
     const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -194,6 +257,7 @@ export function computeStats(input: StatsInput): Map<string, PersonStats> {
     const best = Math.max(...mm.values())
     for (const [id, n] of mm) if (n === best && best > 0) stats.get(id)!.monthWins++
   }
+  for (const [id, beerStats] of beerChampionships(input, now)) Object.assign(stats.get(id)!, beerStats)
 
   // Spelletjes
   for (const g of games) {
@@ -259,7 +323,7 @@ export const TIER_COLOR: Record<Tier, string> = {
 export const STAT_TABLES = ['drink_tallies', 'drink_types', 'game_results', 'game_events', 'shopping_items', 'anytimers', 'quotes'] as const
 
 /** Een reset begint een nieuwe telperiode; de profielstatistieken blijven historisch. */
-export function computeAchievementStats(input: StatsInput): Map<string, PersonStats> {
+export function computeAchievementStats(input: StatsInput, now = new Date()): Map<string, PersonStats> {
   const result = new Map<string, PersonStats>()
   const periods = new Map<string, Map<string, PersonStats>>()
   for (const person of input.housemates) {
@@ -272,7 +336,9 @@ export function computeAchievementStats(input: StatsInput): Map<string, PersonSt
         tallies: recent(input.tallies), games: recent(input.games), events: recent(input.events), quotes: recent(input.quotes),
         shopping: input.shopping.filter((r) => (r.checked_at ?? r.created_at) >= since),
         anys: input.anys.filter((r) => (r.redeemed_at ?? r.created_at) >= since),
-      })
+      }, now)
+      // Vergelijk complete maanden met alle huisgenoten, ook als zij eerder in de maand turften.
+      if (since) for (const [id, beerStats] of beerChampionships(input, now, since)) Object.assign(stats.get(id)!, beerStats)
       periods.set(since, stats)
     }
     result.set(person.id, stats.get(person.id)!)
