@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useHouse } from '../lib/house'
 import { useMe } from '../lib/me'
 import type { Housemate } from '../lib/types'
-import { Avatar, Bovenlicht, GlassStrip, Lights } from './decor'
+import { Avatar, GlassStrip, Lights } from './decor'
 
 type Step = { kind: 'pick' } | { kind: 'login'; h: Housemate } | { kind: 'new'; h: Housemate; first?: string }
 
@@ -69,7 +69,7 @@ export default function Login() {
     <div className="entry">
       <Lights />
       <div className="entry-card card">
-        <Bovenlicht size={44} />
+        <img src={`${import.meta.env.BASE_URL}icon.svg`} width={64} height={64} alt="" className="logo-door" />
         <h1 className="entry-title">
           Huize <em>Enshotje</em>
         </h1>

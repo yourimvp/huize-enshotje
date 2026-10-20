@@ -32,6 +32,11 @@ export default function App() {
   )
 }
 
+function MyProfile() {
+  const { me } = useMe()
+  return <Navigate to={me ? `/profiel/${me.id}` : '/'} replace />
+}
+
 function Gate() {
   const { ready, me } = useMe()
   if (!ready) return null
@@ -57,6 +62,7 @@ function Gate() {
           <Route path="achievements" element={<AchievementsPage />} />
           <Route path="prijzenkast" element={<Navigate to="/achievements" replace />} />
           <Route path="profiel/:id" element={<Profiel />} />
+          <Route path="profiel" element={<MyProfile />} />
           <Route path="huis" element={<Huis />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

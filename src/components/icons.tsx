@@ -18,6 +18,10 @@ export type IconName =
   | 'achievements'
   | 'huis'
   | 'profiel'
+  | 'boodschappen'
+  | 'turf'
+  | 'instellingen'
+  | 'spellen'
 
 const INK = '#fffaf0'
 const SHADE = 'rgba(26,22,18,.55)'
@@ -142,6 +146,41 @@ const ICONS: Record<IconName, ReactNode> = {
       <path d="M8 23 L24 9 L40 23 L36 23 L36 40 L12 40 L12 23 Z" fill={INK} />
       <path d="M8 23 L24 9 L40 23 M12 23 L12 40 L36 40 L36 23" {...stitch} />
       <path d="M20 40 L20 30 C20 26 28 26 28 30 L28 40 Z" fill={SHADE} />
+    </>
+  ),
+  boodschappen: (
+    <>
+      <path d="M8 18 L40 18 L36 40 C36 41 35 42 34 42 L14 42 C13 42 12 41 12 40 Z" fill={INK} />
+      <path d="M16 18 C16 8 32 8 32 18" fill="none" stroke={INK} strokeWidth="3" strokeLinecap="round" />
+      <path d="M8 18 L40 18 L36 40 C36 41 35 42 34 42 L14 42 C13 42 12 41 12 40 Z" {...stitch} />
+      <path d="M19 24 L20 36 M24 24 L24 36 M29 24 L28 36" stroke={SHADE} strokeWidth="1.6" strokeLinecap="round" />
+    </>
+  ),
+  turf: (
+    <>
+      {[12, 19, 26, 33].map((x) => (
+        <line key={x} x1={x} y1="10" x2={x} y2="38" stroke={INK} strokeWidth="3.6" strokeLinecap="round" />
+      ))}
+      <line x1="7" y1="32" x2="40" y2="15" stroke={INK} strokeWidth="3.6" strokeLinecap="round" />
+      <line x1="7" y1="32" x2="40" y2="15" {...stitch} />
+    </>
+  ),
+  instellingen: (
+    <>
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <rect key={i} x="21" y="6" width="6" height="9" rx="1.5" fill={INK} transform={`rotate(${i * 45} 24 24)`} />
+      ))}
+      <circle cx="24" cy="24" r="12" fill={INK} />
+      <circle cx="24" cy="24" r="12" {...stitch} />
+      <circle cx="24" cy="24" r="4.5" fill={SHADE} />
+    </>
+  ),
+  spellen: (
+    <>
+      <rect x="7" y="12" width="20" height="27" rx="3" fill={INK} transform="rotate(-12 17 25)" />
+      <rect x="21" y="9" width="20" height="27" rx="3" fill={INK} transform="rotate(10 31 22)" />
+      <rect x="23" y="11" width="16" height="23" rx="2" transform="rotate(10 31 22)" {...stitch} />
+      <path d="M31 16 C35 20 35 23 31 27 C27 23 27 20 31 16 Z" fill="#db3b47" transform="rotate(10 31 22)" />
     </>
   ),
   profiel: (

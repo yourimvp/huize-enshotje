@@ -39,8 +39,8 @@ export default function Huis() {
 
   return (
     <div className="page">
-      <PageTitle color="var(--g-yellow)" sub="Instellingen voor het hele huis">
-        Huis
+      <PageTitle color="var(--g-yellow)" sub="Account, huisgenoten, drankjes en onderdelen">
+        Instellingen
       </PageTitle>
 
       <section className="card">

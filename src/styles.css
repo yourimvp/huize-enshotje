@@ -3576,3 +3576,134 @@ input[type='time'] {
   font-size: 18px;
   animation: pop-in 0.25s ease-out;
 }
+
+/* ═════════════════════════════════════════════════════════════
+   Navigatie: meeschuivende onderbalk, swipen, profiel rechtsboven
+   ═════════════════════════════════════════════════════════════ */
+.logo-door {
+  display: block;
+  flex: none;
+  border-radius: 9px;
+  box-shadow: 0 1px 3px rgba(26, 22, 18, 0.2);
+}
+.entry-card .logo-door {
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(26, 22, 18, 0.18);
+}
+.me-link {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  padding: 3px 3px 3px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  font-weight: 600;
+  font-size: 14px;
+}
+.me-link:hover {
+  border-color: var(--text);
+}
+@media (max-width: 420px) {
+  .me-name {
+    display: none;
+  }
+  .me-link {
+    padding: 2px;
+    border: none;
+  }
+}
+
+.nav-mobile {
+  grid-template-columns: repeat(5, 1fr);
+  overflow: hidden;
+}
+.nav-mobile a {
+  gap: 4px;
+  transition: background 0.2s, color 0.2s;
+}
+.nav-mobile .nav-icon {
+  display: grid;
+  place-items: center;
+  height: 32px;
+}
+.nav-mobile .lapje {
+  filter: grayscale(1) opacity(0.45);
+  transition: filter 0.2s, transform 0.2s;
+}
+.nav-mobile a.active .lapje {
+  filter: none;
+  transform: scale(1.12) translateY(-1px);
+}
+.nav-mobile a.active {
+  background: var(--raise);
+}
+.nav-mobile .lbl {
+  font-size: 10.5px;
+}
+/* Kleine hint dat er links/rechts nog meer pagina's zijn */
+.nav-more {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 22px;
+  margin-top: -11px;
+  border-radius: 2px;
+  background: var(--line-2);
+}
+.nav-more.left {
+  left: 3px;
+}
+.nav-more.right {
+  right: 3px;
+}
+
+.nav-desktop .lapje {
+  filter: grayscale(1) opacity(0.5);
+}
+.nav-desktop a.active .lapje,
+.nav-desktop a:hover .lapje {
+  filter: none;
+}
+.nav-desktop .lapje::after {
+  inset: 2px;
+  border-width: 1px;
+}
+
+/* Inschuiven bij swipen of wisselen */
+.page-anim {
+  animation: page-in 0.22s ease-out;
+}
+.page-anim.from-left {
+  animation-name: page-from-right;
+}
+.page-anim.from-right {
+  animation-name: page-from-left;
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes page-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+@keyframes page-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-anim {
+    animation: none !important;
+  }
+}
+.content {
+  touch-action: pan-y;
+  overflow-x: hidden;
+}

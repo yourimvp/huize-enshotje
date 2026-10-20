@@ -57,7 +57,13 @@ export default function Profiel() {
         <div>
           <h1 className="profile-name">{h.name}</h1>
           <p className="muted">
-            {h.id === meId ? 'Dit ben jij' : 'Huisgenoot'}
+            {h.id === meId ? (
+              <>
+                Dit ben jij · <Link to="/huis">instellingen</Link>
+              </>
+            ) : (
+              'Huisgenoot'
+            )}
             {extra.streak >= 2 && <span className="flame"> 🔥 {extra.streak} dagen op rij</span>}
           </p>
         </div>
