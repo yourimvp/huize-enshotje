@@ -42,7 +42,7 @@ export default function Rad() {
   if (wheel) return <Spinner wheel={wheel} onBack={() => setOpenId(null)} onEdit={() => setEditing(wheel)} />
 
   return (
-    <GameShell icon="🎡" title="Radjes" intro="Maak je eigen radjes en draai ze zo vaak je wilt.">
+    <GameShell icon="rad" title="Radjes" intro="Maak je eigen radjes en draai ze zo vaak je wilt.">
       <div className="wheel-list">
         {wheels.map((w) => (
           <button key={w.id} className="card wheel-card" onClick={() => setOpenId(w.id)}>
@@ -83,50 +83,67 @@ function MiniWheel({ segments }: { segments: WheelSegment[] }) {
   return <WheelSvg segments={segments} size={54} mini />
 }
 
-/** Het rad zelf, geborduurd: satijnsteek-vakken met rijgsteek ertussen. */
+/** Het rad: strakke vlakken, tekst van de rand naar binnen zodat hij niet onder de knop valt. */
 function WheelSvg({ segments, size, rotation = 0, mini = false }: { segments: WheelSegment[]; size: number; rotation?: number; mini?: boolean }) {
   const n = Math.max(1, segments.length)
   const r = 96
   const arc = (2 * Math.PI) / n
   const pt = (a: number, rad = r) => [100 + rad * Math.sin(a), 100 - rad * Math.cos(a)]
+  // Tekst loopt van r=88 naar binnen tot net buiten de knop (r≈34)
+  const outer = 88
+  const room = outer - 36
   return (
     <svg viewBox="0 0 200 200" width={size} height={size} className="wheel-svg" aria-hidden>
-      <g style={{ transform: `rotate(${rotation}deg)`, transformOrigin: '100px 100px' }} filter={mini ? undefined : 'url(#emb)'}>
+      <circle cx="100" cy="100" r="99" fill="#1a1612" />
+      <g style={{ transform: `rotate(${rotation}deg)`, transformOrigin: '100px 100px' }}>
         {segments.map((s, i) => {
           const [x1, y1] = pt(i * arc)
           const [x2, y2] = pt((i + 1) * arc)
           const d = n === 1 ? `M100 4 A96 96 0 1 1 99.9 4 Z` : `M100 100 L${x1} ${y1} A${r} ${r} 0 ${arc > Math.PI ? 1 : 0} 1 ${x2} ${y2} Z`
           const color = s.color ?? PALETTE[i % PALETTE.length]
           const mid = (i + 0.5) * arc
-          const [tx, ty] = pt(mid, 60)
+          // Linkerhelft draaien we om, zodat niets op z'n kop staat
+          const flip = mid > Math.PI
+          const [tx, ty] = pt(mid, outer)
+          // Lettergrootte zo dat de tekst in de ruimte past, en niet hoger dan de taartpunt breed is
+          const label = s.label.length > 26 ? s.label.slice(0, 25) + '…' : s.label
+          const byLength = (room - 4) / (0.62 * Math.max(4, label.length))
+          const byWidth = 2 * 62 * Math.sin(arc / 2) * 0.62
+          const fs = Math.max(6, Math.min(13, byLength, byWidth))
           return (
             <g key={i}>
               <path d={d} fill={color} />
-              <path d={d} fill="url(#satin)" />
               {!mini && (
                 <text
                   x={tx}
                   y={ty}
-                  transform={`rotate(${(mid * 180) / Math.PI - 90} ${tx} ${ty})`}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize={n > 10 ? 7.5 : 9.5}
+                  transform={`rotate(${(mid * 180) / Math.PI - 90 + (flip ? 180 : 0)} ${tx} ${ty})`}
+                  textAnchor={flip ? 'start' : 'end'}
+                  dominantBaseline="central"
+                  fontSize={fs}
                   fontWeight="700"
                   fill="#fff"
                   fontFamily="Figtree, system-ui, sans-serif"
+                  style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,.18)', strokeWidth: 1.2 }}
                 >
-                  {s.label.length > 18 ? s.label.slice(0, 17) + '…' : s.label}
+                  {label}
                 </text>
               )}
             </g>
           )
         })}
-        {segments.map((_, i) => {
-          const [x, y] = pt(i * arc)
-          return <line key={i} x1="100" y1="100" x2={x} y2={y} stroke="#fff" strokeOpacity=".9" strokeWidth="1.2" strokeDasharray="3 2" />
-        })}
-        <circle cx="100" cy="100" r="97" fill="none" stroke="#fff" strokeWidth="2" strokeDasharray="4 2.5" />
+        {n > 1 &&
+          segments.map((_, i) => {
+            const [x, y] = pt(i * arc)
+            return <line key={i} x1="100" y1="100" x2={x} y2={y} stroke="#fff" strokeWidth="1.4" />
+          })}
+        {!mini &&
+          segments.map((_, i) => {
+            const [x, y] = pt(i * arc, 92)
+            return <circle key={i} cx={x} cy={y} r="2.2" fill="#fff" />
+          })}
       </g>
+      <circle cx="100" cy="100" r="96" fill="none" stroke="#fff" strokeWidth="2.5" />
     </svg>
   )
 }
@@ -190,7 +207,7 @@ function Spinner({ wheel, onBack, onEdit }: { wheel: Wheel; onBack: () => void; 
   }
 
   return (
-    <GameShell icon="🎡" title={wheel.name}>
+    <GameShell icon="rad" title={wheel.name}>
       <div className="game-topbar">
         <button className="link small" onClick={onBack}>
           ← Alle radjes
@@ -250,7 +267,7 @@ function WheelEditor({ wheel, onDone }: { wheel: Wheel | null; onDone: (id?: str
   }
 
   return (
-    <GameShell icon="🎡" title={wheel ? 'Rad bewerken' : 'Nieuw rad'}>
+    <GameShell icon="rad" title={wheel ? 'Rad bewerken' : 'Nieuw rad'}>
       <section className="card form">
         <input placeholder="Naam, bijv. Strafrad" value={name} onChange={(e) => setName(e.target.value)} aria-label="Naam van het rad" />
         <div className="seg-list">

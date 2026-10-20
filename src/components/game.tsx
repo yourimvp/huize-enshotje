@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useHouse } from '../lib/house'
 import { Avatar } from './decor'
+import { Icon, type IconName } from './icons'
 
 /**
  * Borduurstijl, net als de huisfoto en de hoodie:
@@ -36,16 +37,14 @@ export function Kast({ children, className = '' }: { children: ReactNode; classN
   return <div className={`kast ${className}`}>{children}</div>
 }
 
-export function GameShell({ icon, title, intro, children, back = '/spellen' }: { icon: string; title: string; intro?: ReactNode; children: ReactNode; back?: string }) {
+export function GameShell({ icon, title, intro, children, back = '/spellen' }: { icon: IconName; title: string; intro?: ReactNode; children: ReactNode; back?: string }) {
   return (
     <div className="page game-page">
       <Link to={back} className="link small">
         ← Spellen
       </Link>
       <header className="game-head">
-        <span className="game-badge" aria-hidden>
-          {icon}
-        </span>
+        <Lapje icon={icon} color={GAME_COLOR[icon] ?? 'var(--text)'} size={58} />
         <div>
           <h1>{title}</h1>
           {intro && <p className="muted">{intro}</p>}
@@ -112,11 +111,21 @@ export function Uitslag({ title, lines, children }: { title: ReactNode; lines: U
   )
 }
 
-/** Eenvoudig geborduurd lapje met een emoji erin (voor de spellenlijst). */
-export function Lapje({ icon, color, size = 64 }: { icon: string; color: string; size?: number }) {
+export const GAME_COLOR: Partial<Record<IconName, string>> = {
+  paard: '#2fa463',
+  rad: '#e0468f',
+  duel: '#ee7432',
+  dobbel: '#3a7be0',
+  ei: '#d9a520',
+  chwazi: '#7a4bd1',
+  mines: '#db3b47',
+}
+
+/** Geborduurd lapje met een eigen icoon erop. */
+export function Lapje({ icon, color, size = 64 }: { icon: IconName; color: string; size?: number }) {
   return (
-    <span className="lapje" style={{ width: size, height: size, ['--c' as string]: color, fontSize: size * 0.46 }} aria-hidden>
-      {icon}
+    <span className="lapje" style={{ width: size, height: size, ['--c' as string]: color }} aria-hidden>
+      <Icon name={icon} size={size * 0.62} />
     </span>
   )
 }

@@ -20,6 +20,7 @@ import Ei from './games/Ei'
 import Rad from './games/Rad'
 import Duel from './games/Duel'
 import Dobbelstenen from './games/Dobbelstenen'
+import Mines from './games/Mines'
 
 export default function App() {
   return (
@@ -49,6 +50,7 @@ function Gate() {
           <Route path="spellen/rad" element={<Rad />} />
           <Route path="spellen/duel" element={<Duel />} />
           <Route path="spellen/dobbelstenen" element={<Dobbelstenen />} />
+          <Route path="spellen/mines" element={<Mines />} />
           <Route path="ranking" element={<Ranking />} />
           <Route path="anys" element={<Anys />} />
           <Route path="agenda" element={<Agenda />} />

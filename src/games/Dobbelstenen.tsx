@@ -129,7 +129,7 @@ export default function Dobbelstenen() {
   const free = dice.filter((d) => !d.held)
 
   return (
-    <GameShell icon="🎲" title="Dobbelstenen" intro="Tik een dobbelsteen om hem vast te zetten. Gooi met de knop, of zet schudden aan.">
+    <GameShell icon="dobbel" title="Dobbelstenen" intro="Tik een dobbelsteen om hem vast te zetten. Gooi met de knop, of zet schudden aan.">
       <div className="segmented">
         <button className={!mexen ? 'on' : ''} onClick={() => mexen && toggleMexen()}>
           Vrij gooien

@@ -89,6 +89,24 @@ function step(r: Race): Race {
   return { ...r, deck, discard, pos, flipped, current: card, message, moved: card.suit, setback, tick: r.tick + 1 }
 }
 
+/** Finishboog: twee paaltjes met een geblokt doek en lampjes. */
+function FinishBanner() {
+  const squares = []
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 8; c++) if ((r + c) % 2 === 0) squares.push(<rect key={`${r}${c}`} x={6 + c * 5} y={6 + r * 5} width="5" height="5" fill="#1a1612" />)
+  return (
+    <svg viewBox="0 0 52 44" className="finish-banner" aria-label="Finish">
+      <rect x="3" y="4" width="3" height="40" rx="1.5" fill="#fff" stroke="#8a6334" strokeWidth=".8" />
+      <rect x="46" y="4" width="3" height="40" rx="1.5" fill="#fff" stroke="#8a6334" strokeWidth=".8" />
+      <rect x="6" y="6" width="40" height="15" fill="#fff" />
+      {squares}
+      <rect x="6" y="6" width="40" height="15" fill="none" stroke="#db3b47" strokeWidth="1.2" strokeDasharray="2 1.4" />
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <circle key={i} className="finish-bulb" cx={8 + i * 7.2} cy="3" r="1.8" fill={['#f2b51f', '#e0468f', '#3a7be0', '#2fa463', '#ee7432', '#db3b47'][i]} style={{ animationDelay: `${i * 0.25}s` }} />
+      ))}
+    </svg>
+  )
+}
+
 export default function Paardenrace() {
   const { active, byId } = useHouse()
   const [bets, setBets] = useState<Record<string, Bet>>({})
@@ -144,7 +162,7 @@ export default function Paardenrace() {
 
   if (!race)
     return (
-      <GameShell icon="🏇" title="Paardenrace" intro="Kies per speler een paard en zet slokken in. Winnaars delen hun slokken uit, verliezers drinken ze.">
+      <GameShell icon="paard" title="Paardenrace" intro="Kies per speler een paard en zet slokken in. Winnaars delen hun slokken uit, verliezers drinken ze.">
         <Kast className="stal">
           {SUITS.map((s) => (
             <div key={s} className="stal-horse">
@@ -209,7 +227,7 @@ export default function Paardenrace() {
     : []
 
   return (
-    <GameShell icon="🏇" title="Paardenrace">
+    <GameShell icon="paard" title="Paardenrace">
       <div className="game-topbar">
         <button className="link small" onClick={() => (setRace(null), setAuto(false))}>
           ← Inzetten
@@ -235,7 +253,7 @@ export default function Paardenrace() {
                     ) : (
                       <span className="pcard small back" />
                     ))}
-                  {col === FINISH && <span className="finish-flag">🏁</span>}
+                  {col === FINISH && <FinishBanner />}
                 </span>
               )
             })}

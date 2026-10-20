@@ -13,7 +13,19 @@ export default function Ranking() {
   const disciplines = useTable('disciplines').rows
   const times = useTable('times').rows
   const [dId, setDId] = useState<string | null>(null)
-  const discipline = disciplines.find((d) => d.id === dId) ?? disciplines[0]
+  const discipline = disciplines.find((d) => d.id === dId) ?? (dId === WINS ? undefined : disciplines[0])
+  const tabs = [...disciplines.map((d) => ({ id: d.id, label: d.name })), { id: WINS, label: 'Spelletjes' }]
+
+  if (dId === WINS || (!discipline && disciplines.length === 0 && dId === WINS))
+    return (
+      <div className="page">
+        <PageTitle color="var(--g-blue)" sub="Meeste spelletjes gewonnen">
+          Ranking
+        </PageTitle>
+        <Tabs value={WINS} onChange={setDId} tabs={tabs} />
+        <WinsBoard />
+      </div>
+    )
 
   if (!discipline)
     return (
@@ -32,7 +44,7 @@ export default function Ranking() {
       <PageTitle color="var(--g-blue)" sub="Snelste tijd telt">
         Ranking
       </PageTitle>
-      <Tabs value={discipline.id} onChange={setDId} tabs={disciplines.map((d) => ({ id: d.id, label: d.name }))} />
+      <Tabs value={discipline.id} onChange={setDId} tabs={tabs} />
       <Board times={own} />
       <Recorder key={discipline.id} disciplineId={discipline.id} name={discipline.name} times={own} />
       <Recent times={own} />
@@ -56,9 +68,89 @@ function useBest(times: TimeEntry[]) {
 }
 
 const MEDAL = ['Goud', 'Zilver', 'Brons']
+const WINS = '__wins'
 
-function Medal({ name, ms, size }: { name: string; ms: number; size: number }) {
-  const time = formatMs(ms)
+/** Leaderboard: meeste gewonnen spelletjes, met podium en per spel. */
+function WinsBoard() {
+  const { rows } = useTable('game_results')
+  const { byId } = useHouse()
+  const [game, setGame] = useState<string | null>(null)
+
+  const games = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const r of rows) m.set(r.game, (m.get(r.game) ?? 0) + 1)
+    return [...m].sort((a, b) => b[1] - a[1]).map(([g]) => g)
+  }, [rows])
+
+  const ranked = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const r of rows) if (!game || r.game === game) m.set(r.winner_id, (m.get(r.winner_id) ?? 0) + 1)
+    return [...m]
+      .map(([id, n]) => ({ h: byId.get(id), n }))
+      .filter((x): x is { h: Housemate; n: number } => !!x.h)
+      .sort((a, b) => b.n - a.n)
+  }, [rows, byId, game])
+
+  const podium = [ranked[1], ranked[0], ranked[2]]
+  const place = [2, 1, 3]
+  return (
+    <>
+      {games.length > 1 && (
+        <div className="picker">
+          <button className={`chip plain ${game === null ? 'on' : ''}`} onClick={() => setGame(null)}>
+            Alle spellen
+          </button>
+          {games.map((g) => (
+            <button key={g} className={`chip plain ${game === g ? 'on' : ''}`} onClick={() => setGame(g)}>
+              {g}
+            </button>
+          ))}
+        </div>
+      )}
+      {ranked.length === 0 ? (
+        <section className="card">
+          <Empty>Nog niemand heeft een spelletje gewonnen.</Empty>
+        </section>
+      ) : (
+        <>
+          <section className="podium" aria-label="Podium">
+            {podium.map((x, i) => (
+              <div key={x?.h.id ?? `e${i}`} className={`step step-${place[i]} ${x ? '' : 'empty-step'}`} role="group" aria-label={`${place[i]}e plaats · ${MEDAL[place[i] - 1]}`}>
+                {x && (
+                  <div className="step-top">
+                    <Medal name={x.h.name} value={String(x.n)} unit={x.n === 1 ? 'zege' : 'zeges'} size={place[i] === 1 ? 108 : 88} />
+                  </div>
+                )}
+                <div className="block">
+                  <span>{place[i]}</span>
+                </div>
+              </div>
+            ))}
+          </section>
+          {ranked.length > 3 && (
+            <section className="card">
+              <ol className="list rest">
+                {ranked.slice(3).map(({ h, n }, i) => (
+                  <li key={h.id} className="row">
+                    <span className="rank">{i + 4}</span>
+                    <Avatar name={h.name} color={h.color} size={24} />
+                    <div className="row-main">
+                      <strong>{h.name}</strong>
+                    </div>
+                    <span className="time">{n}×</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+        </>
+      )}
+    </>
+  )
+}
+
+function Medal({ name, value, unit = 'sec', size }: { name: string; value: string; unit?: string; size: number }) {
+  const time = value
   const leaves = [
     [39, 89, -35], [33, 83, -45], [28, 76, -55], [25, 68, -70],
     [24, 59, -85], [25, 50, -100], [28, 42, -115], [33, 35, -130],
@@ -83,7 +175,7 @@ function Medal({ name, ms, size }: { name: string; ms: number; size: number }) {
       <div className="medal-engraving">
         <span className="medal-name" title={name}>{name}</span>
         <span className="medal-time" style={{ fontSize: size * (time.length > 5 ? 0.17 : 0.24) }}>{time}</span>
-        <span className="medal-unit">sec</span>
+        <span className="medal-unit">{unit}</span>
       </div>
     </div>
   )
@@ -107,7 +199,7 @@ function Board({ times }: { times: TimeEntry[] }) {
           <div key={x?.t.id ?? `e${i}`} className={`step step-${place[i]} ${x ? '' : 'empty-step'}`} role="group" aria-label={`${place[i]}e plaats · ${MEDAL[place[i] - 1]}`}>
             {x && (
               <div className="step-top">
-                <Medal name={x.h.name} ms={x.t.ms} size={place[i] === 1 ? 108 : 88} />
+                <Medal name={x.h.name} value={formatMs(x.t.ms)} size={place[i] === 1 ? 108 : 88} />
               </div>
             )}
             <div className="block">

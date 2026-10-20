@@ -29,6 +29,7 @@ export interface PersonStats {
   bestWinStreak: number
   horseWins: number
   eggBreaks: number
+  mineHits: number
   duelWins: number
   duelBestStreak: number
   duelBestMs: number | null
@@ -74,6 +75,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   A('Spelletjes', 'win-5', '🃏', 'Spelletjesbeest', 'Win 5 spelletjes', 'zilver', 5, (s) => s.wins),
   A('Spelletjes', 'win-25', '🏆', 'Kampioen van Enshotje', 'Win 25 spelletjes', 'goud', 25, (s) => s.wins),
   A('Spelletjes', 'horse-3', '🏇', 'Paardenfluisteraar', 'Win 3 keer Paardenrace', 'zilver', 3, (s) => s.horseWins),
+  A('Spelletjes', 'mine-3', '💣', 'Mijnenveger', 'Stap 3 keer op een bom bij Mines', 'speciaal', 3, (s) => s.mineHits, true),
   A('Spelletjes', 'egg-5', '🥚', 'Pechvogel', 'Breek 5 keer het ei', 'speciaal', 5, (s) => s.eggBreaks, true),
   // Winstreak
   A('Winstreak', 'winstreak-2', '⚡', 'Dubbelslag', 'Win 2 spelletjes achter elkaar', 'brons', 2, (s) => s.bestWinStreak),
@@ -124,6 +126,7 @@ const empty = (): PersonStats => ({
   bestWinStreak: 0,
   horseWins: 0,
   eggBreaks: 0,
+  mineHits: 0,
   duelWins: 0,
   duelBestStreak: 0,
   duelBestMs: null,
@@ -210,6 +213,7 @@ export function computeStats(input: StatsInput): Map<string, PersonStats> {
     const s = stats.get(e.housemate_id)
     if (!s) continue
     if (e.kind === 'egg_break') s.eggBreaks++
+    if (e.kind === 'mine_hit') s.mineHits++
     if (e.kind === 'duel_misfire') s.duelMisfires++
     if (e.kind === 'duel_win_ms' && e.value !== null) s.duelBestMs = s.duelBestMs === null ? e.value : Math.min(s.duelBestMs, e.value)
   }

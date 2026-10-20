@@ -4,6 +4,7 @@ import { useTable } from '../lib/hooks'
 import { localDate, addDays } from '../lib/days'
 import { PageTitle } from '../components/decor'
 import { ConfirmButton, Empty, PlusIcon } from '../components/ui'
+import TimePicker from '../components/TimePicker'
 import type { AgendaEvent } from '../lib/types'
 
 export function dateLabel(date: string): string {
@@ -57,7 +58,7 @@ export default function Agenda() {
         <input placeholder="Wat? Bijv. huisavond, borrel, schoonmaakdag" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Wat" />
         <div className="field-row">
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Datum" />
-          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Tijd (optioneel)" />
+          <TimePicker value={time} onChange={setTime} />
         </div>
         <input placeholder="Notitie (optioneel)" value={note} onChange={(e) => setNote(e.target.value)} aria-label="Notitie" />
         <button className="btn primary" disabled={!title.trim() || !date}>

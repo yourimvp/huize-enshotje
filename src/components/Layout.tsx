@@ -3,7 +3,8 @@ import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
 import { DEMO } from '../lib/db'
 import { Bovenlicht, Lights } from './decor'
 import { AchievementWatcher } from './Achievements'
-import { StitchDefs } from './game'
+import { Lapje, StitchDefs } from './game'
+import type { IconName } from './icons'
 import { useMe } from '../lib/me'
 
 const MAIN = [
@@ -12,12 +13,12 @@ const MAIN = [
   { to: '/turf', label: 'Turf', color: 'var(--g-orange)' },
   { to: '/spellen', label: 'Spellen', color: 'var(--g-blue)' },
 ]
-const MORE = [
-  { to: '/ranking', label: 'Ranking', icon: '⏱️', color: 'var(--g-blue)' },
-  { to: '/anys', label: 'Anys', icon: '🍺', color: 'var(--g-magenta)' },
-  { to: '/agenda', label: 'Agenda', icon: '📅', color: 'var(--g-red)' },
-  { to: '/achievements', label: 'Achievements', icon: '🏆', color: 'var(--gold)' },
-  { to: '/huis', label: 'Huis', icon: '⚙️', color: 'var(--muted)' },
+const MORE: { to: string; label: string; icon: IconName; color: string }[] = [
+  { to: '/ranking', label: 'Ranking', icon: 'ranking', color: '#3a7be0' },
+  { to: '/anys', label: 'Anys', icon: 'anys', color: '#e0468f' },
+  { to: '/agenda', label: 'Agenda', icon: 'agenda', color: '#db3b47' },
+  { to: '/achievements', label: 'Achievements', icon: 'achievements', color: '#d9a520' },
+  { to: '/huis', label: 'Huis', icon: 'huis', color: '#7a7062' },
 ]
 export const NAV = [...MAIN, ...MORE.filter((m) => m.to !== '/huis')]
 
@@ -26,7 +27,7 @@ export default function Layout() {
   const loc = useLocation()
   useEffect(() => setMoreOpen(false), [loc.pathname])
   const { me } = useMe()
-  const more = me ? [{ to: `/profiel/${me.id}`, label: 'Mijn profiel', icon: '🙂', color: me.color }, ...MORE] : MORE
+  const more = me ? [{ to: `/profiel/${me.id}`, label: 'Mijn profiel', icon: 'profiel' as IconName, color: me.color }, ...MORE] : MORE
   const moreActive = more.some((m) => loc.pathname.startsWith(m.to))
 
   return (
@@ -67,9 +68,7 @@ export default function Layout() {
           <nav className="sheet" aria-label="Meer" onClick={(e) => e.stopPropagation()}>
             {more.map((m) => (
               <NavLink key={m.to} to={m.to} className="sheet-item">
-                <span className="sheet-icon" aria-hidden>
-                  {m.icon}
-                </span>
+                <Lapje icon={m.icon} color={m.color} size={44} />
                 {m.label}
               </NavLink>
             ))}

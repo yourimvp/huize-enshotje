@@ -66,7 +66,7 @@ export default function Ei() {
   }
 
   return (
-    <GameShell icon="🥚" title="Crack the egg" intro="Tik om de beurt op het ei. Niemand weet na hoeveel tikken hij breekt. Wie hem breekt, drinkt.">
+    <GameShell icon="ei" title="Crack the egg" intro="Tik om de beurt op het ei. Niemand weet na hoeveel tikken hij breekt. Wie hem breekt, drinkt.">
       <section className="card">
         <h2 className="card-title">Spelers (optioneel, in volgorde)</h2>
         <PlayerSelect value={players} onChange={(p) => (taps === 0 || broken) && setPlayers(p)} />
